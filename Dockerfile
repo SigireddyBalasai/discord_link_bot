@@ -13,4 +13,4 @@ RUN uv sync --frozen
 # Set environment variables
 
 # Run the bot
-CMD ["uv", "run", "python", "main.py"]
+CMD ["uv", "run", "main.py"]
