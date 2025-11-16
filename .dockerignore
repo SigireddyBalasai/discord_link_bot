@@ -24,4 +24,3 @@ coverage.xml
 .elasticbeanstalk
 logs
 .env
-uv.lock
