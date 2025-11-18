@@ -18,6 +18,13 @@ bot_data.db
 # Environment variables
 .env
 .env.local
+infra/terraform.tfvars
+
+# Terraform local state and provider details — do not commit
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/.terraform/
+infra/*.tfplan
 
 # IDE
 .vscode/
