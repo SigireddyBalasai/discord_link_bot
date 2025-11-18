@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Pre-push git hook: builds Docker image locally and triggers CodeDeploy deploy
+# This file is a template - make sure to set execute bit and configure env vars
+
+set -euo pipefail
+
+# Path to script that handles building/pushing and creating a deploy bundle
+HOOK_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+PROJECT_ROOT=$(cd "$HOOK_DIR/.." && pwd)
+
+# First ensure the code is pushed to CodeCommit if a remote named 'codecommit' exists
+CODECOMMIT_REMOTE="${CODECOMMIT_REMOTE:-codecommit}"
+
+if git remote get-url "$CODECOMMIT_REMOTE" >/dev/null 2>&1; then
+	echo "Pushing to CodeCommit remote '$CODECOMMIT_REMOTE'..."
+	git push "$CODECOMMIT_REMOTE" HEAD:refs/heads/$(git rev-parse --abbrev-ref HEAD) || true
+else
+	echo "No CodeCommit remote found; skipping push to CodeCommit"
+fi
+
+# Optionally run local deployment script (this will push to ECR and trigger CodeDeploy)
+if [ "${LOCAL_DEPLOY:-false}" = "true" ]; then
+	echo "Running local deploy script (LOCAL_DEPLOY=${LOCAL_DEPLOY})"
+	exec "$PROJECT_ROOT/scripts/local_deploy.sh" "$@"
+else
+	echo "LOCAL_DEPLOY disabled, done"
+fi

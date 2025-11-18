@@ -1,0 +1,26 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /tmp/deploy
+
+hooks:
+  BeforeInstall:
+    - location: scripts/stop_container.sh
+      timeout: 180
+
+  AfterInstall:
+    - location: scripts/ecr_login.sh
+      timeout: 180
+
+  ApplicationStart:
+    - location: scripts/start_container.sh
+      timeout: 180
+
+  ApplicationStop:
+    - location: scripts/stop_container.sh
+      timeout: 120
+
+  ApplicationCleanup:
+    - location: scripts/cleanup.sh
+      timeout: 60

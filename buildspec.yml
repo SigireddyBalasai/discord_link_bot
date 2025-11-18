@@ -1,0 +1,40 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      docker: 20
+    commands:
+      - echo Logging in to Amazon ECR...
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+
+  pre_build:
+    commands:
+      - echo Prebuilding
+      - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo "ImageTag=$IMAGE_TAG"
+
+  build:
+    commands:
+      - echo Building the Docker image...
+      - docker build -t "$ECR_REPO:$IMAGE_TAG" .
+      - docker tag "$ECR_REPO:$IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG"
+      - docker push "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG"
+      - docker tag "$ECR_REPO:$IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest"
+      - docker push "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest"
+
+  post_build:
+    commands:
+      - echo Preparing CodeDeploy artifact
+      - mkdir -p deploy_bundle
+      - cp appspec.yml deploy_bundle/
+      - cp -r scripts deploy_bundle/ || true
+      - echo "$ECR_REPO" > deploy_bundle/ECR_REPO
+      - echo "BRANCH=$CODEBUILD_SOURCE_VERSION" > deploy_bundle/.deploy_meta
+      - tar -czf deployment.zip -C deploy_bundle .
+
+artifacts:
+  files:
+    - deployment.zip
+  discard-paths: yes
