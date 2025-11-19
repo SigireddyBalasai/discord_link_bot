@@ -27,6 +27,7 @@ resource "aws_instance" "discord_bot" {
   key_name               = aws_key_pair.discord_ssh.key_name
   subnet_id              = element(module.vpc.public_subnets, 0)
   vpc_security_group_ids = [aws_security_group.discord_bot.id]
+  associate_public_ip_address = true
 
   iam_instance_profile = aws_iam_instance_profile.ec2_instance.name
 
