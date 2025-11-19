@@ -13,6 +13,13 @@ else
   docker pull ${image_name}
 fi
 
+# If ECR_REPO isn't supplied, try the terraform-managed repo name
+if [ -z "$ECR_REPO" ]; then
+  if command -v terraform >/dev/null 2>&1; then
+    ECR_REPO=$(cd "$(dirname "$0")/.." && terraform -chdir=infra output -raw ecr_repo_name 2>/dev/null || true)
+  fi
+fi
+
 # Run container
 docker run -d --name discord-bot \
   --restart unless-stopped \

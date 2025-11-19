@@ -1,29 +1,11 @@
 Notes
 
 - For CI, this repository uses AWS CodeCommit + CodeBuild + CodePipeline. If you prefer another system, you can implement equivalent steps to build the Docker image and call CodeDeploy.
-# Discord Link Bot — local deploy
+# Discord Link Bot
 
-This repo is set up to deploy the Discord bot to a single EC2 instance using CodeDeploy. Local deployment (via the included `pre-push` hook or CodeCommit + CodePipeline) is the recommended developer workflow.
-
-Local deploy steps
-
-1. Ensure these tools are installed on your machine:
-   - aws-cli
-   - docker
-   - jq
-
-2. Configure AWS credentials and region:
-
-```bash
-export AWS_ACCESS_KEY_ID=...
-export AWS_SECRET_ACCESS_KEY=...
-export AWS_REGION=ap-south-1
+This repo is set up to deploy the Discord bot to a single EC2 instance using CodeDeploy. All builds and deploys are handled through the CI pipeline; local deployment is not supported.
 ```
-
-3. Create or use an existing `ECR` repo and S3 bucket for CodeDeploy bundles (see infra/README.md for `terraform` option). Use `.env` to store these environment variables in the repo:
-
-```
-ECR_REPO=discord-link-bot
+ECR_REPO=$(terraform -chdir=infra output -raw ecr_repo_name)
 S3_BUCKET=discord-bot-deploy-471112640567
 CODEDEPLOY_APP=discord-bot-app
 CODEDEPLOY_GROUP=discord-bot-deployment-group
@@ -32,17 +14,10 @@ CODEDEPLOY_GROUP=discord-bot-deployment-group
 4. Enable the git hook:
 
 ```bash
-cp .githooks/* .git/hooks/
-chmod +x .git/hooks/*
+# Git hooks are intentionally not supported locally — the CI performs builds/deploys.
 ```
 
-You can enable the local deploy step performed by the hook by exporting the environment variable `LOCAL_DEPLOY=true`. Example:
-
-```bash
-export LOCAL_DEPLOY=true
-# optional: change the remote name if you use a different remote for CodeCommit
-export CODECOMMIT_REMOTE=codecommit
-```
+Local builds are not supported — use the CI pipeline for builds and deployments. SSH access to the EC2 instance is enabled by default and open to `allowed_ssh_cidr` (default `0.0.0.0/0`); narrow this value for production.
 
 CodeCommit setup and mirror
 ---------------------------
@@ -64,7 +39,7 @@ This will:
 Continuous deployment (automated)
 ---------------------------------
 
-Automated CI/CD (CodeCommit → CodeBuild → CodeDeploy) can be enabled by setting `codecommit_name` and `ecr_repo` in `infra/terraform.tfvars` or passing them via `-var-file` to `terraform`. The pipeline will watch the `main` branch of the CodeCommit repo and trigger a CodeBuild job which:
+Automated CI/CD (CodeCommit → CodeBuild → CodeDeploy) can be enabled by setting `codecommit_name` in `infra/terraform.tfvars` or passing it via `-var-file` to `terraform`. The Terraform configuration creates a default ECR repository named `${local.name_prefix}-ecr_repository`; if you want a custom name, edit `infra/ecr.tf`.
 
 - Builds the Docker image and pushes it to ECR
 - Produces a deployment artifact (appspec + scripts)

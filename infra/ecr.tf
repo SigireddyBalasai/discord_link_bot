@@ -1,7 +1,5 @@
 resource "aws_ecr_repository" "discord" {
-  count = var.ecr_repo != "" ? 1 : 0
-
-  name = var.ecr_repo
+  name                 = "${local.name_prefix}-ecr_repository"
   image_tag_mutability = "MUTABLE"
   image_scanning_configuration {
     scan_on_push = true
@@ -12,14 +10,7 @@ resource "aws_ecr_repository" "discord" {
 
   force_delete = var.ecr_force_delete
 
-  tags = local.common_tags
+  tags = local.tags
 }
 
-resource "aws_ecr_repository" "base_images" {
-  name                 = "discord-base-images"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = false
-  }
-  tags = local.common_tags
-}
+

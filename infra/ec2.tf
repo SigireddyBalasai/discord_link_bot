@@ -8,7 +8,7 @@ resource "aws_security_group" "discord_bot" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.allowed_ssh_cidr]
   }
 
   egress {
@@ -18,35 +18,42 @@ resource "aws_security_group" "discord_bot" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(local.common_tags, {"Name" = "discord-bot-sg"})
+  tags = merge(local.tags, { "Name" = "discord-bot-sg" })
 }
 
 resource "aws_instance" "discord_bot" {
-  ami                    = data.aws_ami.amazon_linux_2023.id
+  ami                    = local.effective_ami_id
   instance_type          = var.instance_type
-  key_name               = var.key_name != "" ? var.key_name : null
+  key_name               = aws_key_pair.discord_ssh.key_name
   subnet_id              = element(module.vpc.public_subnets, 0)
   vpc_security_group_ids = [aws_security_group.discord_bot.id]
 
   iam_instance_profile = aws_iam_instance_profile.ec2_instance.name
 
-  # Merge with global tags
-  tags = merge(local.common_tags, {"Name" = "discord-bot-instance", "CodeDeployEnv" = "discord-bot"})
+  monitoring = true
 
-  user_data = templatefile("./userdata.tpl", {aws_region = var.aws_region})
+  root_block_device {
+    encrypted = var.root_volume_encrypted
+  }
+
+
+  tags = merge(local.tags, { "Name" = "discord-bot-instance", "CodeDeployEnv" = "discord-bot" })
+
+  user_data = templatefile("./userdata.tpl", { aws_region = var.aws_region })
 }
 
 resource "aws_ebs_volume" "discord_data" {
   availability_zone = element(data.aws_availability_zones.available.names, 0)
-  size              = 5
-  type              = "gp3"
-  # Merge with global tags
-  tags = merge(local.common_tags, {"Name" = "discord-bot-ebs"})
+  size              = var.ebs_size
+  type              = var.ebs_type
+  encrypted         = var.ebs_encrypted
+
+  tags = merge(local.tags, { "Name" = "discord-bot-ebs" })
 }
 
 resource "aws_volume_attachment" "discord_data_attachment" {
-  device_name = "/dev/sdh"
-  volume_id   = aws_ebs_volume.discord_data.id
-  instance_id = aws_instance.discord_bot.id
+  device_name  = "/dev/sdh"
+  volume_id    = aws_ebs_volume.discord_data.id
+  instance_id  = aws_instance.discord_bot.id
   skip_destroy = false
 }

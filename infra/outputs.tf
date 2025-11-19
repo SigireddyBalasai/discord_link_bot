@@ -3,8 +3,16 @@ output "public_ip" {
   value       = aws_instance.discord_bot.public_ip
 }
 
-output "ssh_cmd" {
-  value = var.key_name != "" ? "ssh -i <path-to-key> ec2-user@${aws_instance.discord_bot.public_ip}" : "ssh ec2-user@${aws_instance.discord_bot.public_ip}"
+
+output "ssh_private_key_pem" {
+  value     = tls_private_key.discord_ssh.private_key_pem
+  sensitive = true
+}
+
+output "ssh_keyfile_path" {
+  value       = local_file.ssh_keyfile.filename
+  description = "Local path to the generated private key file (sensitive)."
+  sensitive   = true
 }
 
 output "codedeploy_app" {
@@ -12,13 +20,18 @@ output "codedeploy_app" {
 }
 
 output "s3_bucket" {
-  value = var.bundle_s3_bucket
+  value       = var.bundle_s3_bucket
   description = "S3 bucket to upload CodeDeploy bundles (create outside Terraform or set via var)"
 }
 
 output "ecr_repo_uri" {
-  value       = var.ecr_repo != "" ? aws_ecr_repository.discord[0].repository_url : ""
-  description = "ECR repository URI (empty if ecr_repo var not set)"
+  value       = aws_ecr_repository.discord.repository_url
+  description = "ECR repository URI"
+}
+
+output "ecr_repo_name" {
+  value       = aws_ecr_repository.discord.name
+  description = "ECR repository name"
 }
 
 output "codecommit_clone_url_http" {
@@ -39,9 +52,4 @@ output "codebuild_project" {
 output "codepipeline_name" {
   value       = aws_codepipeline.discord_pipeline[0].name
   description = "CodePipeline name (if enabled)"
-}
-
-output "dockerhub_secret_arn" {
-  value       = aws_secretsmanager_secret.dockerhub.arn
-  description = "ARN of the Secrets Manager secret for Docker Hub credentials"
 }

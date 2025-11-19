@@ -1,24 +1,24 @@
 resource "aws_iam_role" "codepipeline_role" {
   count = var.codecommit_name != "" ? 1 : 0
-  name = "discord-codepipeline-role"
+  name  = "discord-codepipeline-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
-        Effect = "Allow",
+        Effect    = "Allow",
         Principal = { Service = "codepipeline.amazonaws.com" },
-        Action = "sts:AssumeRole",
+        Action    = "sts:AssumeRole",
       }
     ]
   })
 
-  tags = local.common_tags
+  tags = local.tags
 }
 
 resource "aws_iam_policy" "codepipeline_policy" {
   count = var.codecommit_name != "" ? 1 : 0
-  name = "discord-codepipeline-policy"
+  name  = "discord-codepipeline-policy"
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -51,8 +51,8 @@ resource "aws_iam_policy" "codepipeline_policy" {
           "codedeploy:GetApplication",
           "codedeploy:GetDeploymentGroup",
           "codedeploy:GetDeploymentConfig",
-            "codedeploy:RegisterApplicationRevision",
-            "codedeploy:GetDeployment",
+          "codedeploy:RegisterApplicationRevision",
+          "codedeploy:GetDeployment",
         ],
         Resource = "*"
       },
@@ -72,15 +72,15 @@ resource "aws_iam_policy" "codepipeline_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "codepipeline_role_attach" {
-  count = var.codecommit_name != "" ? 1 : 0
+  count      = var.codecommit_name != "" ? 1 : 0
   role       = aws_iam_role.codepipeline_role[0].name
   policy_arn = aws_iam_policy.codepipeline_policy[0].arn
 }
 
 resource "aws_codepipeline" "discord_pipeline" {
-  count = var.codecommit_name != "" ? 1 : 0
-  name       = "discord-bot-pipeline"
-  role_arn   = aws_iam_role.codepipeline_role[0].arn
+  count    = var.codecommit_name != "" ? 1 : 0
+  name     = "discord-bot-pipeline"
+  role_arn = aws_iam_role.codepipeline_role[0].arn
 
   artifact_store {
     location = aws_s3_bucket.codedeploy_bundles.bucket
@@ -121,7 +121,7 @@ resource "aws_codepipeline" "discord_pipeline" {
     }
   }
 
-  /* Manual approval stage removed — pipeline is automatic */
+
 
   stage {
     name = "Deploy"
@@ -134,11 +134,11 @@ resource "aws_codepipeline" "discord_pipeline" {
       version         = "1"
       input_artifacts = ["BuildArtifact"]
       configuration = {
-        ApplicationName = aws_codedeploy_app.discord_bot_app.name
+        ApplicationName     = aws_codedeploy_app.discord_bot_app.name
         DeploymentGroupName = aws_codedeploy_deployment_group.discord_bot_deployment_group.deployment_group_name
       }
     }
   }
 
-  tags = local.common_tags
+  tags = local.tags
 }

@@ -1,23 +1,23 @@
 resource "aws_iam_role" "codebuild_role" {
   count = 1
-  name = "discord-codebuild-role"
+  name  = "discord-codebuild-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
+        Effect    = "Allow"
         Principal = { Service = "codebuild.amazonaws.com" }
-        Action = "sts:AssumeRole"
+        Action    = "sts:AssumeRole"
       }
     ]
   })
-  tags = local.common_tags
+  tags = local.tags
 }
 
 resource "aws_iam_role_policy" "codebuild_policy" {
   count = 1
-  name = "discord-codebuild-policy"
-  role = aws_iam_role.codebuild_role[0].id
+  name  = "discord-codebuild-policy"
+  role  = aws_iam_role.codebuild_role[0].id
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -29,7 +29,7 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        Resource = "*"
+        Resource = ["${aws_cloudwatch_log_group.discord_bot_logs.arn}:*"]
       },
       {
         Effect = "Allow",
@@ -43,7 +43,9 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "ecr:InitiateLayerUpload",
           "ecr:PutImage"
         ],
-        Resource = "*"
+        Resource = [
+          aws_ecr_repository.discord.arn
+        ]
       },
       {
         Effect = "Allow",
@@ -64,7 +66,7 @@ resource "aws_iam_role_policy" "codebuild_policy" {
 
 resource "aws_codebuild_project" "discord_build" {
   count = 1
-  name = "discord-bot-build"
+  name  = "discord-bot-build"
 
   service_role = aws_iam_role.codebuild_role[0].arn
 
@@ -73,28 +75,30 @@ resource "aws_codebuild_project" "discord_build" {
   }
 
   environment {
-    compute_type = "BUILD_GENERAL1_MEDIUM"
-    image = "aws/codebuild/standard:6.0"
-    type  = "LINUX_CONTAINER"
+    compute_type    = "BUILD_GENERAL1_MEDIUM"
+    image           = "aws/codebuild/standard:6.0"
+    type            = "LINUX_CONTAINER"
     privileged_mode = true
     environment_variable {
       name  = "ECR_REPO"
-      value = var.ecr_repo
+      value = aws_ecr_repository.discord.name
     }
     environment_variable {
       name  = "AWS_DEFAULT_REGION"
       value = var.aws_region
     }
     environment_variable {
-      name  = "ECR_BASE_REPO"
-      value = aws_ecr_repository.base_images.name
+      name  = "RUN_IAC_SCANS"
+      value = var.run_iac_scans ? "true" : "false"
     }
+
+
   }
 
   source {
-    type  = "CODEPIPELINE"
+    type      = "CODEPIPELINE"
     buildspec = file("${path.module}/../buildspec.yml")
   }
 
-  tags = local.common_tags
+  tags = local.tags
 }

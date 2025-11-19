@@ -34,25 +34,39 @@ Best practices & notes
   - Consider Docker secrets for production deploys.
 - Use BuildKit (DOCKER_BUILDKIT=1) for cache mounts; faster incremental builds.
 
-Docker Hub pulls in CI
- If your Dockerfile uses base images hosted on Docker Hub (or other rate-limited registries) and you hit rate limits in AWS CodeBuild, we recommend providing DockerHub credentials to CodeBuild via AWS Secrets Manager.
- - If your Dockerfile uses base images hosted on external registries and you want to avoid using any external credentials (e.g., Docker Hub), we mirror those base images into a private ECR repository before building and then pass those ECR images as build arguments to the Docker build. This keeps all pulls within AWS.
+Registry-level Docker build cache (recommended for CI)
+-----------------------------------------------------
 
-  Steps:
-  1. Terraform creates a placeholder Secrets Manager secret named `discord/dockerhub` when you run `terraform apply` under `infra/` — it contains `username` and `password` fields you must replace with your Docker Hub credentials (see one-line CLI below).
-  1. Terraform now creates an additional ECR repository called `discord-base-images`. During CI, CodeBuild pulls base images (e.g., `ghcr.io/astral-sh/uv`, `python:3.13-alpine`), tags them with `$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/discord-base-images:<tag>`, and pushes them to ECR.
-  2. No Terraform variables are required. Once the secret contains your real Docker Hub credentials, CodeBuild will automatically inject `DOCKERHUB_USERNAME` and `DOCKERHUB_PASSWORD` into the build environment and `buildspec.yml` logs into Docker Hub before pulls.
-  3. Update the secret value (JSON) that Terraform created in `discord/dockerhub` with both `username` and `password` keys; for example:
-  2. No Terraform variables are required. After the ECR base repo is pushed, subsequent builds source base layers from ECR rather than Docker Hub or other external registries.
+If you want a persistent Docker layer cache across independent CodeBuild runs (so builds don't need to pull and rebuild all layers each time), you can use BuildKit's remote registry cache. This stores cache metadata in your ECR registry and reuses it in subsequent builds.
+
+Key benefits:
+- Reuse layers between builds and avoid rate-limited pulls from Docker Hub.
+- Works well in ephemeral CI environments like AWS CodeBuild.
+
+Tradeoffs:
+- The first build still needs to pull base images and upload the cache.
+- Caching stores additional objects in ECR and may increase storage costs.
+- ECR must be writable from the CodeBuild role and cache artifacts are stored as registry manifests/tags.
+
+> Note: using a registry-backed BuildKit cache (buildx --cache-to/--cache-from) stores layer metadata in ECR and effectively replicates image layers. If your policy forbids base-image replication, do not enable registry cache. Instead authenticate to the original registries to avoid rate limits.
+
+To use this in AWS CodeBuild, make sure the CodeBuild service role can push and pull images from ECR (typical permissions: `ecr:BatchCheckLayerAvailability`, `ecr:GetDownloadUrlForLayer`, `ecr:PutImage`, `ecr:InitiateLayerUpload`, `ecr:UploadLayerPart`, `ecr:CompleteLayerUpload`, `ecr:GetAuthorizationToken`, etc.).
+
+Docker Hub pulls in CI
+----------------------
+If your Dockerfile uses a base image hosted on Docker Hub (or another rate-limited registry) and you hit rate limits in AWS CodeBuild, provide Docker Hub credentials to CodeBuild via Secrets Manager so the build can authenticate to Docker Hub and use the authenticated pull quota.
+
+Steps to add Docker Hub credentials to CodeBuild (recommended):
+1. Create a Secrets Manager secret (or reuse an existing one) with a JSON value like {"username":"your_user","password":"your_pass"}.
+2. Add environment variables in the CodeBuild project (or via Terraform) for `DOCKERHUB_USERNAME` (plaintext) and `DOCKERHUB_PASSWORD` (from the Secrets Manager secret). `buildspec.yml` will log in automatically if these are present.
+3. Re-run the pipeline and builds will use authenticated Docker Hub pulls.
      ```bash
      aws secretsmanager put-secret-value \
        --secret-id arn:aws:secretsmanager:us-east-1:123456789012:secret:discord/dockerhub \
        --secret-string '{"username":"your_dockerhub_user","password":"supersecret"}' --region us-east-1
      ```
   4. Re-run the pipeline (or push a commit) so CodeBuild picks up authenticated pulls.
-  2. Update `infra/terraform.tfvars` with `dockerhub_username = "<your-username>"` and `dockerhub_password_secret_arn = "arn:aws:secretsmanager:...:secret:discord/dockerhub/password-XYZ"`.
-  3. Run `terraform plan` and `terraform apply` to update the `aws_codebuild_project` environment variables.
-  4. The pipeline will then inject `DOCKERHUB_USERNAME` (plaintext) and `DOCKERHUB_PASSWORD` (from Secrets Manager) into the build environment; `buildspec.yml` automatically logs in before pulling images.
+  5. (Optional) If you have strict no-replication policy, do not enable ECR base-image mirroring or registry caches.
 - If you track `uv.lock` in git, use `uv lock` to regenerate after dependency changes. `uv sync --locked` will use uv.lock.
  - If you track `uv.lock` in git, use `uv lock` to regenerate after dependency changes. `uv sync --locked` will use uv.lock.
  - Caching notes (from uv docs):

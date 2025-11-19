@@ -16,6 +16,10 @@ systemctl enable --now docker
 yum install -y ruby wget
 cd /tmp
 
+# Ensure SSM agent is present so we can use Session Manager (works out-of-the-box for most Amazon Linux images)
+yum install -y amazon-ssm-agent || true
+systemctl enable --now amazon-ssm-agent || true
+
 # Install AWS CLI v2 (optional)
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip

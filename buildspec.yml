@@ -22,27 +22,31 @@ phases:
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo "ImageTag=$IMAGE_TAG"
       - echo "(skipping local test image to reduce pulls against Docker Hub)"
-      - echo "Mirroring base images into ECR ($ECR_BASE_REPO)"
+      - echo "Pulling base images from original registries"
       - docker pull ghcr.io/astral-sh/uv:python3.13-alpine || true
-      - docker tag ghcr.io/astral-sh/uv:python3.13-alpine $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:uv-python3.13-alpine
-      - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:uv-python3.13-alpine || true
-      - |
-        if docker pull python:3.13-alpine; then
-          docker tag python:3.13-alpine $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine
+      - docker pull python:3.13-alpine || true
+      - echo "Installing static analysis tools for Terraform and IaC"
+      - pip3 install --upgrade pip
+      - pip3 install checkov || true
+      - echo "Installing tfsec"
+      - curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install.sh | bash || true
+      - echo "Running tfsec and checkov scans"
+      - if [ "${RUN_IAC_SCANS}" = "true" ]; then
+          tfsec infra;
+          checkov -d infra;
         else
-          echo "python:3.13-alpine not found on Docker Hub; using ghcr uv image as runtime fallback"
-          docker tag ghcr.io/astral-sh/uv:python3.13-alpine $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine
+          echo "IaC scanning disabled";
         fi
-      - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine || true
 
   build:
     commands:
       - echo Building the Docker image...
-      - DOCKER_BUILDKIT=1 docker build --build-arg BUILDER_BASE=$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:uv-python3.13-alpine --build-arg RUNTIME_BASE=$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine -t $ECR_REPO:$IMAGE_TAG .
+      - DOCKER_BUILDKIT=1 docker build --build-arg BUILDER_BASE=ghcr.io/astral-sh/uv:python3.13-alpine --build-arg RUNTIME_BASE=python:3.13-alpine -t $ECR_REPO:$IMAGE_TAG .
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest
+      - docker tag $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest || true
       - echo "Docker test disabled in CI to avoid public registry rate-limits"
 
   post_build:

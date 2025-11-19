@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
-# Build and push Docker image to ECR, then upload CodeDeploy bundle to S3 and trigger deployment
-# Usage: scripts/local_deploy.sh
-# Requirements:
-# - aws cli + jq
-# - docker
-# - AWS credentials set in environment
-# - environment variables: AWS_REGION, ECR_REPO, S3_BUCKET, CODEDEPLOY_APP, CODEDEPLOY_GROUP
+# Local deploy script is intentionally retained for reference but local builds/deploys are unsupported.
+exit 1
 
 set -euo pipefail
 
@@ -24,6 +19,13 @@ for v in "${required[@]}"; do
     exit 2
   fi
 done
+
+# If ECR_REPO isn't supplied, try to use the terraform-managed repo name
+if [ -z "${ECR_REPO:-}" ]; then
+  if command -v terraform >/dev/null 2>&1; then
+    ECR_REPO=$(cd "$(dirname "$0")/.." && terraform -chdir=infra output -raw ecr_repo_name 2>/dev/null || true)
+  fi
+fi
 
 # Determine account id
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)

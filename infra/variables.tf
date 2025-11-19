@@ -4,29 +4,87 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "ami_family" {
+  description = "AMI family to use. Supported: 'amzn2' or 'amzn2023'"
+  type        = string
+  default     = "amzn2"
+}
+
+variable "ami_architecture" {
+  description = "AMI architecture to use, e.g. 'x86_64' or 'aarch64'"
+  type        = string
+  default     = "x86_64"
+}
+
+variable "ami_id" {
+  description = "Explicit AMI ID to use. If set, this overrides other selection methods."
+  type        = string
+  default     = ""
+}
+
+ 
+
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
   default     = "t3.nano"
 }
 
-variable "key_name" {
-  description = "Optional SSH key name for the EC2 instance"
+
+variable "allowed_ssh_cidr" {
+  description = "CIDR allowed to SSH into the EC2 instance (default 0.0.0.0/0). Set a narrower CIDR for production."
   type        = string
-  default     = ""
+  default     = "0.0.0.0/0"
+}
+
+/* SSH access is always enabled; use `allowed_ssh_cidr` to restrict where SSH is accepted. */
+
+
+
+
+variable "ebs_size" {
+  description = "Size in GiB for the additional EBS volume."
+  type        = number
+  default     = 5
+}
+
+variable "ebs_type" {
+  description = "EBS volume type to use for the additional EBS volume."
+  type        = string
+  default     = "gp3"
+}
+
+variable "ebs_encrypted" {
+  description = "Whether the additional EBS volume should be encrypted. Default true for production."
+  type        = bool
+  default     = true
+}
+
+variable "root_volume_encrypted" {
+  description = "Whether the instance root block device should be encrypted."
+  type        = bool
+  default     = true
+}
+
+variable "block_public_s3" {
+  description = "Block public access on S3 buckets created by Terraform"
+  type        = bool
+  default     = true
+}
+
+variable "run_iac_scans" {
+  description = "Whether to run IaC security scans (tfsec, checkov) in CodeBuild. Default true for production."
+  type        = bool
+  default     = true
 }
 
 variable "bundle_s3_bucket" {
   description = "S3 bucket where CodeDeploy bundles are uploaded"
   type        = string
-  default     = "" 
-}
-
-variable "ecr_repo" {
-  description = "ECR repository name used by the EC2 instance to pull images"
-  type        = string
   default     = ""
 }
+
+ 
 
 variable "ecr_force_delete" {
   description = "Whether Terraform will force delete the repository on destroy (true will delete even if images present)"
@@ -34,13 +92,13 @@ variable "ecr_force_delete" {
   default     = true
 }
 
-variable "common_tags" {
+variable "tags" {
   description = "Map of common tags applied to all AWS resources"
   type        = map(string)
   default     = {}
 }
 
-## NOTE: DockerHub credentials are not used - we mirror required base images into ECR
+
 
 variable "codecommit_name" {
   description = "Optional CodeCommit repository name; leave blank to not create CodeCommit."
@@ -48,9 +106,7 @@ variable "codecommit_name" {
   default     = ""
 }
 
-/* Pipeline is always enabled for this project (CodeCommit → CodeBuild → CodeDeploy). */
 
 
-/* NOTE: `enable_manual_approval` and `enable_codebuild_trigger` were removed: pipeline is fully automated.
-   If you need manual approval in the future, add a variable and re-introduce the stage in `pipeline.tf`.
-*/
+
+

@@ -1,15 +1,33 @@
-data "aws_ami" "amazon_linux_2023" {
+ 
+data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
-    name   = "name"
-    # Use a conservative default (Amazon Linux 2) for broader compatibility in mock runs.
-    # If you prefer Amazon Linux 2023 / arm64 for t4g, change this to the relevant pattern.
-    values = ["amzn2-ami-hvm-2.0.*-x86_64*", "amzn2-ami-hvm-2.0.*-aarch64*"]
+    name = "name"
+    values = var.ami_family == "amzn2023" ? ["amzn2023-ami-*-${var.ami_architecture}*"] : ["amzn2-ami-hvm-2.0.*-${var.ami_architecture}*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = [var.ami_architecture]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
 }
 
+
+locals {
+  effective_ami_id = var.ami_id != "" ? var.ami_id : data.aws_ami.amazon_linux.id
+}
 data "aws_availability_zones" "available" {}
 
 data "aws_region" "current" {}

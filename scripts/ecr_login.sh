@@ -11,8 +11,14 @@ REGION=$(curl -s 'http://169.254.169.254/latest/dynamic/instance-identity/docume
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 if [ -z "$ECR_REPO" ]; then
-  echo "ECR_REPO not set"
-  exit 1
+  # Try to read repo name from terraform output if present
+  if command -v terraform >/dev/null 2>&1; then
+    ECR_REPO=$(cd "$(dirname "$0")/.." && terraform output -raw ecr_repo_name 2>/dev/null || true)
+  fi
+  if [ -z "$ECR_REPO" ]; then
+    echo "ECR_REPO not set"
+    exit 1
+  fi
 fi
 
 aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com

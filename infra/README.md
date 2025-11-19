@@ -20,19 +20,22 @@ cd infra
 terraform init
 ```
 
-4. Plan & apply:
+4. This repo uses CI/CD for builds and deployments; local build scripts were removed. To trigger a deployment run:
 
-```bash
-terraform plan -var="key_name=your-key-name"
-terraform apply -var="key_name=your-key-name" -auto-approve
+```
+# push to the CodeCommit repo -> CodePipeline triggers the pipeline
+git push codecommit HEAD:refs/heads/main
+```
+
+If you want to run containers locally for development, build and run Docker directly; use `$(terraform -chdir=infra output -raw ecr_repo_name)` to get the repo name if you need to push an image to ECR.
 
 You can pass `common_tags` to ensure tag consistency across the infrastructure. Example:
 
 ```bash
 terraform plan -var='common_tags={owner="your-name",environment="dev"}' \
-	-var='key_name=your-key-name'
-terraform apply -var='common_tags={owner="your-name",environment="dev"}' \
-	-var='key_name=your-key-name' -auto-approve
+	#terraform apply -var='common_tags={owner="your-name",environment="dev"}' -auto-approve
+ 
+ Note: Terraform will create a key pair in AWS and write the private key to a local file for inspection and SSH access; the file is ignored by git and stored in your local machine for convenience. Use `terraform output -raw ssh_keyfile_path` to get the path after apply. CI still does the automated builds & deploys; local builds and local deploys remain unsupported.
 ```
 ```
 
@@ -48,37 +51,94 @@ terraform apply -var='common_tags={owner="your-name",environment="dev"}' \
 ## Notes & recommended secrets
  - `ECR_REPO` – the name of the ECR repo where either your local deploy or automated pipeline will push the image
  - `S3_BUCKET` – the S3 bucket created by Terraform will be the bundle destination; you can also set your own
- - To deploy locally, you do not need remote workflows. Set the following locally (or in `.env`): `AWS_REGION`, `ECR_REPO`, `S3_BUCKET`, `CODEDEPLOY_APP`, `CODEDEPLOY_GROUP` and ensure `aws` + `docker` are available.
+ - Secure shell access: this project supports SSM Session Manager for remote management. SSH is enabled by default and `allowed_ssh_cidr` controls allowed source IPs.
 
-Local deploy with git hook
--------------------------
+SSM Session Manager
+-------------------
 
-The repo includes a git pre-push hook template in `.githooks/pre-push` that calls `scripts/local_deploy.sh` to build, tag, push, upload the bundle, and trigger a CodeDeploy deployment. To enable:
-
-1. Copy hooks into the repo's `.git/hooks`: 
-
-```bash
-cp .githooks/* .git/hooks/
-chmod +x .git/hooks/*
-```
-
-2. (Optional) Or set git hooks path globally: 
-
-```bash
-git config core.hooksPath .githooks
-```
-
-3. Configure `.env` or export env vars used by `scripts/local_deploy.sh`:
+The EC2 instance has the `AmazonSSMManagedInstanceCore` policy attached by default. To start a session from your machine use the AWS CLI:
 
 ```
-AWS_REGION=ap-south-1
-ECR_REPO=discord-link-bot
-S3_BUCKET=discord-bot-deploy-471112640567
-CODEDEPLOY_APP=discord-bot-app
-CODEDEPLOY_GROUP=discord-bot-deployment-group
+aws ssm start-session --target <instance-id>
 ```
 
-Now `git push` will build the Docker image, push it to ECR, and create a CodeDeploy deployment that deploys the bundle to your EC2 instance.
+This avoids needing a public SSH port; recommended for production.
+
+Production hardening checklist
+-----------------------------
+
+This repository is intended for production workloads. Below are recommended security and operational defaults we apply or suggest:
+
+ - Use SSM Session Manager (recommended). SSH is enabled by default and accepts traffic from `allowed_ssh_cidr` (default 0.0.0.0/0); restrict this for production.
+
+Provider configuration
+----------------------
+
+The Terraform AWS provider is now defined in `providers.tf`. This keeps provider setup separate from the high-level resource definitions in `main.tf`. For production: consider enabling `assume_role` with a specific `role_arn` or setting provider aliases for different accounts.
+- EBS: additional data disk is encrypted by default (see `ebs_encrypted = true`) and root block device encryption is also enabled (`root_volume_encrypted = true`).
+- S3: public access is blocked on the deployment artifact bucket (`block_public_s3 = true`).
+- ECR: image scanning on push is enabled by default; ensure you push only trusted images.
+ - ECR: image scanning on push is enabled by default; ensure you push only trusted images. The ECR repository is named `${local.name_prefix}-ecr_repository` by default — edit `infra/ecr.tf` to change the name if you need a custom repository.
+ - ECR: image scanning on push is enabled by default; ensure you push only trusted images. The ECR repository is named `${local.name_prefix}-ecr_repository` by default — edit `infra/ecr.tf` to change the name if you need a custom repository.
+- IAM: roles are scoped; review their least-privilege usage. Consider rotating keys and using AWS Organizations for centralized policy.
+- CloudWatch: `monitoring = true` is enabled for the EC2 instance; enable log retention and alerting for critical logs.
+
+If you want, I can add automated checks (e.g., local precommit or CI policy checks), configure SSM session logging to CloudWatch, or add a Optional `terraform plan` CI step to prevent accidental infra drift.
+
+Deploying the app
+-----------------
+
+1. Enable the pipeline by setting `codecommit_name` in `infra/terraform.tfvars` (or pass `-var='codecommit_name=my-repo'` on the command line) and run `terraform apply` in the `infra` directory.
+
+2. After `apply`, the ECR repository will be available as the default name — you can get it with:
+
+```
+terraform -chdir=infra output -raw ecr_repo_name
+```
+
+3. Push code to the CodeCommit repo configured by Terraform (or push to the remote `codecommit` if you set it). Example:
+
+```
+git push codecommit HEAD:refs/heads/main
+```
+
+This push triggers CodePipeline (Source → Build → Deploy). Alternatively, start the pipeline manually:
+
+```
+aws codepipeline start-pipeline-execution --name $(terraform -chdir=infra output -raw codepipeline_name)
+```
+
+4. The pipeline builds the Docker image, pushes it to the ECR repository, archives a CodeDeploy bundle to the S3 bucket, and then runs a CodeDeploy deployment to the EC2 instance. Use `aws codepipeline get-pipeline-state` and CodeBuild/CodeDeploy consoles to view logs and deployment status.
+
+Advanced: SSH-over-SSM (no inbound port required)
+------------------------------------------------
+
+If you need to run your local SSH client against the instance, you can use SSM to forward a port locally. This avoids ever opening port 22 in the security group but still allows an SSH session using your existing SSH tools:
+
+1. Start a port forwarding session (AWS CLI v2):
+
+```
+aws ssm start-session \
+	--target i-0123456789abcdef0 \
+	--document-name AWS-StartPortForwardingSession \
+	--parameters '{"portNumber":["22"],"localPortNumber":["2022"]}'
+```
+
+2. In a different terminal, connect with SSH:
+
+```
+ssh -i /path/to/key -p 2022 ec2-user@localhost
+```
+
+This uses the SSM agent to forward remote port 22 through the SSM channel to your machine's port 2022. No inbound SSH (22) is required on security groups.
+
+EC2 Instance Connect vs Session Manager
+--------------------------------------
+
+You can also use "EC2 Instance Connect" from the AWS Console to open a browser-based SSH terminal to an instance. However, EC2 Instance Connect still requires SSH traffic on port 22, so if your security group blocks SSH / 0.0.0.0/0 is not present, the Instance Connect option won't work. Session Manager works regardless of port 22.
+ - The repository no longer supports local builds or deploys; use the CI pipeline for building and deploying images and artifacts.
+
+Local builds and deployment via git hooks were removed — the pipeline is the supported way to build and deploy.
 
 Automated CI/CD with CodePipeline
 ---------------------------------

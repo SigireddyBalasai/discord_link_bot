@@ -25,6 +25,8 @@ infra/terraform.tfstate
 infra/terraform.tfstate.backup
 infra/.terraform/
 infra/*.tfplan
+infra/.ssh/
+infra/.ssh/*.pem
 
 # IDE
 .vscode/

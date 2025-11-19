@@ -1,10 +1,9 @@
 resource "aws_s3_bucket" "codedeploy_bundles" {
   bucket = terraform.workspace == "default" ? "discord-bot-codedeploy-bundles-${data.aws_region.current.name}" : "discord-bot-codedeploy-bundles-${data.aws_region.current.name}-${terraform.workspace}"
-  # `acl` is deprecated on the bucket resource; use `aws_s3_bucket_acl` resource instead
 
-  # The following features are handled in dedicated resources for newer providers
-  # (see aws_s3_bucket_versioning, aws_s3_bucket_lifecycle_configuration, aws_s3_bucket_server_side_encryption_configuration)
-  tags = local.common_tags
+
+
+  tags = local.tags
 }
 
 resource "aws_s3_bucket_versioning" "codedeploy_bundles_versioning" {
@@ -40,17 +39,18 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "codedeploy_bundle
   }
 }
 
-/*
-The AWS provider warns about ACLs when the bucket's Object Ownership is
-configured to disable ACLs (BucketOwnerEnforced). Since this bucket is used
-by CodeDeploy and Policy-based access control is preferred, we remove the
-explicit `aws_s3_bucket_acl` resource to avoid failures like
-"AccessControlListNotSupported: The bucket does not allow ACLs".
+resource "aws_s3_bucket_public_access_block" "codedeploy_bundles_block" {
+  count = var.block_public_s3 ? 1 : 0
 
-If you need to set a non-default ACL in the future, remove the Object
-Ownership setting or manage the ACL off-band with SDK/console where
-appropriate. For now we rely on bucket policy and SSE instead of an ACL.
-*/
+  bucket = aws_s3_bucket.codedeploy_bundles.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+
 
 output "s3_bucket_name" {
   value       = aws_s3_bucket.codedeploy_bundles.bucket
