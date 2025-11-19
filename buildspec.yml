@@ -5,7 +5,14 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - |
+        # Try ECR login; if GetAuthorizationToken is not permitted the command will fail.
+        ECR_PASSWORD=$(aws ecr get-login-password --region $AWS_DEFAULT_REGION 2>/dev/null) || ECR_PASSWORD=""
+        if [ -n "$ECR_PASSWORD" ]; then
+          echo "$ECR_PASSWORD" | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+        else
+          echo "ECR login failed - skipping ecr login (GetAuthorizationToken may be missing for role)"
+        fi
       - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2 &
       - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
 

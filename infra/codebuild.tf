@@ -37,7 +37,6 @@ resource "aws_iam_role_policy" "codebuild_policy" {
       {
         Effect = "Allow",
         Action = [
-          "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchGetImage",
@@ -49,6 +48,13 @@ resource "aws_iam_role_policy" "codebuild_policy" {
         Resource = [
           aws_ecr_repository.discord.arn
         ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ],
+        Resource = ["*"]
       },
       {
         Effect = "Allow",
