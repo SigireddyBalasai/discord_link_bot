@@ -1,4 +1,5 @@
 ARG BUILDER_BASE=ghcr.io/astral-sh/uv:python3.13-alpine
+ARG RUNTIME_BASE=python:3.13-alpine
 FROM ${BUILDER_BASE} AS builder
 WORKDIR /app
 ENV UV_LINK_MODE=copy
@@ -15,7 +16,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 	--mount=type=bind,source=pyproject.toml,target=pyproject.toml \
 	uv sync --locked --no-editable --compile-bytecode
 
-ARG RUNTIME_BASE=python:3.13-alpine
 FROM ${RUNTIME_BASE} AS runtime
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
