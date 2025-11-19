@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 	--mount=type=bind,source=pyproject.toml,target=pyproject.toml \
 	uv sync --locked --no-editable --compile-bytecode
 
-FROM python:3.13-alpine AS runtime
+FROM ghcr.io/astral-sh/uv:python3.13-alpine AS runtime
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"

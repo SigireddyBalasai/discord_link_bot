@@ -9,7 +9,7 @@ Highlights
 - Use BuildKit cache mounts and `UV_COMPILE_BYTECODE` for faster builds and smaller runtime images.
 
 Available Docker builds in this repo
-- `Dockerfile` — Alpine-based builder and runtime by default; uses `ghcr.io/astral-sh/uv:python3.13-alpine` for the builder and `python:3.13-alpine` for the runtime. This produces a small runtime image while keeping uv in the builder stage.
+- `Dockerfile` — Alpine-based builder and runtime by default; uses `ghcr.io/astral-sh/uv:python3.13-alpine` for both the builder and runtime to avoid DockerHub rate limits. This keeps consistent bases and reduces external pull failures in CI.
 
 How to build
 

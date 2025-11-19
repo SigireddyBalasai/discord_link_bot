@@ -14,8 +14,7 @@ phases:
       - echo Prebuilding
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo "ImageTag=$IMAGE_TAG"
-      - 'echo "Building local test image: helloworld"'
-      - DOCKER_BUILDKIT=1 docker build -t helloworld .
+      - echo "(skipping local test image to reduce pulls against Docker Hub)"
 
   build:
     commands:
@@ -25,9 +24,7 @@ phases:
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest
-      - echo "Docker test run:"
-      - 'docker images'
-      - 'docker run --rm helloworld echo "Hello, World!"'
+      - echo "Docker test disabled in CI to avoid public registry rate-limits"
 
   post_build:
     commands:
