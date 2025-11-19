@@ -14,7 +14,7 @@ phases:
       - echo Prebuilding
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo "ImageTag=$IMAGE_TAG"
-      - 'echo "Building local test image: helloworld"''
+      - 'echo "Building local test image: helloworld"'
       - docker build -t helloworld .
 
   build:
