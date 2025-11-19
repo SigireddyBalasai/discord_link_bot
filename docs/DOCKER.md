@@ -35,11 +35,18 @@ Best practices & notes
 - Use BuildKit (DOCKER_BUILDKIT=1) for cache mounts; faster incremental builds.
 
 Docker Hub pulls in CI
-- If your Dockerfile uses base images hosted on Docker Hub (or other rate-limited registries) and you hit rate limits in AWS CodeBuild, we recommend providing DockerHub credentials to CodeBuild via AWS Secrets Manager.
+ If your Dockerfile uses base images hosted on Docker Hub (or other rate-limited registries) and you hit rate limits in AWS CodeBuild, we recommend providing DockerHub credentials to CodeBuild via AWS Secrets Manager.
 
   Steps:
-
-  1. Create a Secrets Manager secret with the Docker Hub password (e.g., name `discord/dockerhub/password`).
+  1. Terraform creates a placeholder Secrets Manager secret named `discord/dockerhub` when you run `terraform apply` under `infra/` — it contains `username` and `password` fields you must replace with your Docker Hub credentials (see one-line CLI below).
+  2. No Terraform variables are required. Once the secret contains your real Docker Hub credentials, CodeBuild will automatically inject `DOCKERHUB_USERNAME` and `DOCKERHUB_PASSWORD` into the build environment and `buildspec.yml` logs into Docker Hub before pulls.
+  3. Update the secret value (JSON) that Terraform created in `discord/dockerhub` with both `username` and `password` keys; for example:
+     ```bash
+     aws secretsmanager put-secret-value \
+       --secret-id arn:aws:secretsmanager:us-east-1:123456789012:secret:discord/dockerhub \
+       --secret-string '{"username":"your_dockerhub_user","password":"supersecret"}' --region us-east-1
+     ```
+  4. Re-run the pipeline (or push a commit) so CodeBuild picks up authenticated pulls.
   2. Update `infra/terraform.tfvars` with `dockerhub_username = "<your-username>"` and `dockerhub_password_secret_arn = "arn:aws:secretsmanager:...:secret:discord/dockerhub/password-XYZ"`.
   3. Run `terraform plan` and `terraform apply` to update the `aws_codebuild_project` environment variables.
   4. The pipeline will then inject `DOCKERHUB_USERNAME` (plaintext) and `DOCKERHUB_PASSWORD` (from Secrets Manager) into the build environment; `buildspec.yml` automatically logs in before pulling images.

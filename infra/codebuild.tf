@@ -85,20 +85,16 @@ resource "aws_codebuild_project" "discord_build" {
       name  = "AWS_DEFAULT_REGION"
       value = var.aws_region
     }
-    dynamic "environment_variable" {
-      for_each = var.dockerhub_username != "" ? [var.dockerhub_username] : []
-      content {
-        name  = "DOCKERHUB_USERNAME"
-        value = environment_variable.value
-      }
+    environment_variable {
+      name  = "DOCKERHUB_USERNAME"
+      value = "${aws_secretsmanager_secret.dockerhub.arn}:SecretString:username"
+      type  = "SECRETS_MANAGER"
     }
-    dynamic "environment_variable" {
-      for_each = var.dockerhub_password_secret_arn != "" ? [var.dockerhub_password_secret_arn] : []
-      content {
-        name  = "DOCKERHUB_PASSWORD"
-        value = environment_variable.value
-        type  = "SECRETS_MANAGER"
-      }
+
+    environment_variable {
+      name  = "DOCKERHUB_PASSWORD"
+      value = "${aws_secretsmanager_secret.dockerhub.arn}:SecretString:password"
+      type  = "SECRETS_MANAGER"
     }
   }
 
