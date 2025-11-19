@@ -36,11 +36,14 @@ Best practices & notes
 
 Docker Hub pulls in CI
  If your Dockerfile uses base images hosted on Docker Hub (or other rate-limited registries) and you hit rate limits in AWS CodeBuild, we recommend providing DockerHub credentials to CodeBuild via AWS Secrets Manager.
+ - If your Dockerfile uses base images hosted on external registries and you want to avoid using any external credentials (e.g., Docker Hub), we mirror those base images into a private ECR repository before building and then pass those ECR images as build arguments to the Docker build. This keeps all pulls within AWS.
 
   Steps:
   1. Terraform creates a placeholder Secrets Manager secret named `discord/dockerhub` when you run `terraform apply` under `infra/` — it contains `username` and `password` fields you must replace with your Docker Hub credentials (see one-line CLI below).
+  1. Terraform now creates an additional ECR repository called `discord-base-images`. During CI, CodeBuild pulls base images (e.g., `ghcr.io/astral-sh/uv`, `python:3.13-alpine`), tags them with `$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/discord-base-images:<tag>`, and pushes them to ECR.
   2. No Terraform variables are required. Once the secret contains your real Docker Hub credentials, CodeBuild will automatically inject `DOCKERHUB_USERNAME` and `DOCKERHUB_PASSWORD` into the build environment and `buildspec.yml` logs into Docker Hub before pulls.
   3. Update the secret value (JSON) that Terraform created in `discord/dockerhub` with both `username` and `password` keys; for example:
+  2. No Terraform variables are required. After the ECR base repo is pushed, subsequent builds source base layers from ECR rather than Docker Hub or other external registries.
      ```bash
      aws secretsmanager put-secret-value \
        --secret-id arn:aws:secretsmanager:us-east-1:123456789012:secret:discord/dockerhub \

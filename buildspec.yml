@@ -22,11 +22,18 @@ phases:
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo "ImageTag=$IMAGE_TAG"
       - echo "(skipping local test image to reduce pulls against Docker Hub)"
+      - echo "Mirroring base images into ECR ($ECR_BASE_REPO)"
+      - docker pull ghcr.io/astral-sh/uv:python3.13-alpine || true
+      - docker tag ghcr.io/astral-sh/uv:python3.13-alpine $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:uv-python3.13-alpine
+      - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:uv-python3.13-alpine || true
+      - docker pull python:3.13-alpine || true
+      - docker tag python:3.13-alpine $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine
+      - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine || true
 
   build:
     commands:
       - echo Building the Docker image...
-      - DOCKER_BUILDKIT=1 docker build -t $ECR_REPO:$IMAGE_TAG .
+      - DOCKER_BUILDKIT=1 docker build --build-arg BUILDER_BASE=$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:uv-python3.13-alpine --build-arg RUNTIME_BASE=$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine -t $ECR_REPO:$IMAGE_TAG .
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest

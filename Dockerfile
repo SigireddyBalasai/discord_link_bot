@@ -1,5 +1,5 @@
-# Use uv base image with Python 3.13
-FROM ghcr.io/astral-sh/uv:python3.13-alpine AS builder
+ARG BUILDER_BASE=ghcr.io/astral-sh/uv:python3.13-alpine
+FROM ${BUILDER_BASE} AS builder
 WORKDIR /app
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_CACHE_DIR=/root/.cache/uv/python
@@ -15,7 +15,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 	--mount=type=bind,source=pyproject.toml,target=pyproject.toml \
 	uv sync --locked --no-editable --compile-bytecode
 
-FROM ghcr.io/astral-sh/uv:python3.13-alpine AS runtime
+ARG RUNTIME_BASE=python:3.13-alpine
+FROM ${RUNTIME_BASE} AS runtime
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"

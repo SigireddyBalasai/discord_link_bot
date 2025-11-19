@@ -14,3 +14,12 @@ resource "aws_ecr_repository" "discord" {
 
   tags = local.common_tags
 }
+
+resource "aws_ecr_repository" "base_images" {
+  name                 = "discord-base-images"
+  image_tag_mutability = "MUTABLE"
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+  tags = local.common_tags
+}
