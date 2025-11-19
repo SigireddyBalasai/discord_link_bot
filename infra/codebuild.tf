@@ -87,7 +87,7 @@ resource "aws_codebuild_project" "discord_build" {
     }
     environment_variable {
       name  = "ECR_BASE_REPO"
-      value = aws_ecr_repository.base_images.repository_name
+      value = aws_ecr_repository.base_images.name
     }
   }
 

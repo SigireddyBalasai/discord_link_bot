@@ -26,8 +26,13 @@ phases:
       - docker pull ghcr.io/astral-sh/uv:python3.13-alpine || true
       - docker tag ghcr.io/astral-sh/uv:python3.13-alpine $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:uv-python3.13-alpine
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:uv-python3.13-alpine || true
-      - docker pull python:3.13-alpine || true
-      - docker tag python:3.13-alpine $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine
+      - |
+        if docker pull python:3.13-alpine; then
+          docker tag python:3.13-alpine $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine
+        else
+          echo "python:3.13-alpine not found on Docker Hub; using ghcr uv image as runtime fallback"
+          docker tag ghcr.io/astral-sh/uv:python3.13-alpine $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine
+        fi
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_BASE_REPO:python3.13-alpine || true
 
   build:
