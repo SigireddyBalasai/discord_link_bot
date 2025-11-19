@@ -2,27 +2,32 @@ version: 0.2
 
 phases:
   install:
-    runtime-versions:
-      docker: 20
     commands:
       - echo Logging in to Amazon ECR...
       - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+      - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2 &
+      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
 
   pre_build:
     commands:
       - echo Prebuilding
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo "ImageTag=$IMAGE_TAG"
+      - 'echo "Building local test image: helloworld"''
+      - docker build -t helloworld .
 
   build:
     commands:
       - echo Building the Docker image...
-      - docker build -t "$ECR_REPO:$IMAGE_TAG" .
-      - docker tag "$ECR_REPO:$IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG"
-      - docker push "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG"
-      - docker tag "$ECR_REPO:$IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest"
-      - docker push "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest"
+      - 'docker build -t "$ECR_REPO:$IMAGE_TAG" .'
+      - 'docker tag "$ECR_REPO:$IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG"'
+      - 'docker push "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG"'
+      - 'docker tag "$ECR_REPO:$IMAGE_TAG" "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest"'
+      - 'docker push "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest"'
+      - echo "Docker test run:"
+      - 'docker images'
+      - 'docker run --rm helloworld echo "Hello, World!"'
 
   post_build:
     commands:
