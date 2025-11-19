@@ -15,12 +15,12 @@ phases:
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo "ImageTag=$IMAGE_TAG"
       - 'echo "Building local test image: helloworld"'
-      - docker build -t helloworld .
+      - DOCKER_BUILDKIT=1 docker build -t helloworld .
 
   build:
     commands:
       - echo Building the Docker image...
-      - docker build -t $ECR_REPO:$IMAGE_TAG .
+      - DOCKER_BUILDKIT=1 docker build -t $ECR_REPO:$IMAGE_TAG .
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest
