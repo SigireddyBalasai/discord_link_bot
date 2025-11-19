@@ -40,6 +40,18 @@ variable "common_tags" {
   default     = {}
 }
 
+variable "dockerhub_username" {
+  description = "Optional Docker Hub username to authenticate image pulls in CodeBuild. Leave empty to skip DockerHub auth."
+  type        = string
+  default     = ""
+}
+
+variable "dockerhub_password_secret_arn" {
+  description = "Optional ARN of a Secrets Manager secret containing the Docker Hub password; used to inject DOCKERHUB_PASSWORD into CodeBuild (type SECRETS_MANAGER)."
+  type        = string
+  default     = ""
+}
+
 variable "codecommit_name" {
   description = "Optional CodeCommit repository name; leave blank to not create CodeCommit."
   type        = string

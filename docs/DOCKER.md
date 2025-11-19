@@ -9,7 +9,7 @@ Highlights
 - Use BuildKit cache mounts and `UV_COMPILE_BYTECODE` for faster builds and smaller runtime images.
 
 Available Docker builds in this repo
-- `Dockerfile` — Alpine-based builder and runtime by default; uses `ghcr.io/astral-sh/uv:python3.13-alpine` for both the builder and runtime to avoid DockerHub rate limits. This keeps consistent bases and reduces external pull failures in CI.
+- `Dockerfile` — Alpine-based builder and runtime by default; uses `ghcr.io/astral-sh/uv:python3.13-alpine` for the builder and `python:3.13-alpine` for the runtime. This produces a small runtime image while keeping uv in the builder stage.
 
 How to build
 
@@ -33,6 +33,16 @@ Best practices & notes
   - `docker run -e DISCORD_TOKEN=$(cat .env | grep DISCORD_TOKEN) discord-link-bot:local`
   - Consider Docker secrets for production deploys.
 - Use BuildKit (DOCKER_BUILDKIT=1) for cache mounts; faster incremental builds.
+
+Docker Hub pulls in CI
+- If your Dockerfile uses base images hosted on Docker Hub (or other rate-limited registries) and you hit rate limits in AWS CodeBuild, we recommend providing DockerHub credentials to CodeBuild via AWS Secrets Manager.
+
+  Steps:
+
+  1. Create a Secrets Manager secret with the Docker Hub password (e.g., name `discord/dockerhub/password`).
+  2. Update `infra/terraform.tfvars` with `dockerhub_username = "<your-username>"` and `dockerhub_password_secret_arn = "arn:aws:secretsmanager:...:secret:discord/dockerhub/password-XYZ"`.
+  3. Run `terraform plan` and `terraform apply` to update the `aws_codebuild_project` environment variables.
+  4. The pipeline will then inject `DOCKERHUB_USERNAME` (plaintext) and `DOCKERHUB_PASSWORD` (from Secrets Manager) into the build environment; `buildspec.yml` automatically logs in before pulling images.
 - If you track `uv.lock` in git, use `uv lock` to regenerate after dependency changes. `uv sync --locked` will use uv.lock.
  - If you track `uv.lock` in git, use `uv lock` to regenerate after dependency changes. `uv sync --locked` will use uv.lock.
  - Caching notes (from uv docs):
