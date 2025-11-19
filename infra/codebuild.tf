@@ -29,7 +29,10 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        Resource = ["${aws_cloudwatch_log_group.discord_bot_logs.arn}:*"]
+        Resource = [
+          "${aws_cloudwatch_log_group.discord_bot_logs.arn}:*",
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/${aws_codebuild_project.discord_build[0].name}:*"
+        ]
       },
       {
         Effect = "Allow",

@@ -22,9 +22,7 @@ phases:
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo "ImageTag=$IMAGE_TAG"
       - echo "(skipping local test image to reduce pulls against Docker Hub)"
-      - echo "Pulling base images from original registries"
-      - docker pull ghcr.io/astral-sh/uv:python3.13-alpine || true
-      - docker pull python:3.13-alpine || true
+      - echo "Using base images directly from GHCR and Docker Hub (do not mirror to ECR in this step)"
       - echo "Installing static analysis tools for Terraform and IaC"
       - pip3 install --upgrade pip
       - pip3 install checkov || true
