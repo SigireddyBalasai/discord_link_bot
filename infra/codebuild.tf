@@ -89,17 +89,6 @@ resource "aws_codebuild_project" "discord_build" {
       name  = "ECR_BASE_REPO"
       value = aws_ecr_repository.base_images.repository_name
     }
-    environment_variable {
-      name  = "DOCKERHUB_USERNAME"
-      value = "${aws_secretsmanager_secret.dockerhub.arn}:SecretString:username"
-      type  = "SECRETS_MANAGER"
-    }
-
-    environment_variable {
-      name  = "DOCKERHUB_PASSWORD"
-      value = "${aws_secretsmanager_secret.dockerhub.arn}:SecretString:password"
-      type  = "SECRETS_MANAGER"
-    }
   }
 
   source {

@@ -49,7 +49,10 @@ resource "aws_iam_policy" "codepipeline_policy" {
         Action = [
           "codedeploy:CreateDeployment",
           "codedeploy:GetApplication",
-          "codedeploy:GetDeploymentGroup"
+          "codedeploy:GetDeploymentGroup",
+          "codedeploy:GetDeploymentConfig",
+            "codedeploy:RegisterApplicationRevision",
+            "codedeploy:GetDeployment",
         ],
         Resource = "*"
       },

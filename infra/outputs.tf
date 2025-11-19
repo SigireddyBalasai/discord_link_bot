@@ -40,3 +40,8 @@ output "codepipeline_name" {
   value       = aws_codepipeline.discord_pipeline[0].name
   description = "CodePipeline name (if enabled)"
 }
+
+output "dockerhub_secret_arn" {
+  value       = aws_secretsmanager_secret.dockerhub.arn
+  description = "ARN of the Secrets Manager secret for Docker Hub credentials"
+}
