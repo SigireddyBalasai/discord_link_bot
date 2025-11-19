@@ -16,6 +16,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 	--mount=type=bind,source=pyproject.toml,target=pyproject.toml \
 	uv sync --locked --no-editable --compile-bytecode
 
+ARG RUNTIME_BASE
 FROM ${RUNTIME_BASE} AS runtime
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
