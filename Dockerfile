@@ -1,5 +1,5 @@
 ARG BUILDER_BASE=public.ecr.aws/docker/library/python:3.13-alpine
-ARG RUNTIME_BASE=public.ecr.aws/docker/library/python:3.12-slim
+ARG RUNTIME_BASE=public.ecr.aws/docker/library/python:3.13-slim
 FROM ${BUILDER_BASE} AS builder
 # Install UV in the builder stage
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
@@ -28,4 +28,4 @@ COPY --from=builder /app/cogs /app/cogs
 COPY --from=builder /app/core /app/core
 COPY --from=builder /app/link_utils /app/link_utils
 ENV PATH="/app/.venv/bin:$PATH"
-CMD ["sh", "-c", "ls -la /app && python main.py"]
+CMD ["python", "main.py"]
