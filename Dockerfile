@@ -18,6 +18,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY . /app
 
+RUN mkdir -p /app/core/data
+
 ENV PATH="/app/.venv/bin:$PATH"
 
 CMD ["/app/.venv/bin/python", "main.py"]
