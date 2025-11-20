@@ -45,9 +45,9 @@ phases:
       - cp -r scripts deploy_bundle/ || true
       - echo "$ECR_REPO" > deploy_bundle/ECR_REPO
       - echo "BRANCH=$CODEBUILD_SOURCE_VERSION" > deploy_bundle/.deploy_meta
-      - zip -r deployment.zip deploy_bundle/*
+      - tar czf deployment.tar.gz -C deploy_bundle .
 
 artifacts:
   files:
-    - deployment.zip
+    - deployment.tar.gz
   discard-paths: yes
