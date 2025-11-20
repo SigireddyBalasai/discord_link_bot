@@ -1,4 +1,4 @@
-ARG BUILDER_BASE=public.ecr.aws/docker/library/python:3.13-alpine
+ARG BUILDER_BASE=public.ecr.aws/docker/library/python:3.13-slim
 ARG RUNTIME_BASE=public.ecr.aws/docker/library/python:3.13-slim
 FROM ${BUILDER_BASE} AS builder
 # Install UV in the builder stage
