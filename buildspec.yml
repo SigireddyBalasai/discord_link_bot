@@ -29,7 +29,7 @@ phases:
   build:
     commands:
       - echo Building the Docker image...
-      - DOCKER_BUILDKIT=1 docker build --build-arg BUILDER_BASE=ghcr.io/astral-sh/uv:python3.13-alpine --build-arg RUNTIME_BASE=python:3.13-alpine -t $ECR_REPO:$IMAGE_TAG .
+      - DOCKER_BUILDKIT=1 docker build -t $ECR_REPO:$IMAGE_TAG .
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest
