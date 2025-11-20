@@ -28,4 +28,4 @@ COPY --from=builder /app/cogs /app/cogs
 COPY --from=builder /app/core /app/core
 COPY --from=builder /app/link_utils /app/link_utils
 ENV PATH="/app/.venv/bin:$PATH"
-CMD ["python", "main.py"]
+CMD ["sh", "-c", "ls -la /app && python main.py"]
