@@ -42,7 +42,7 @@ phases:
       - echo Preparing CodeDeploy artifact
       - mkdir -p deploy_bundle
       - cp appspec.yml deploy_bundle/
-      - cp -r scripts deploy_bundle/ || true
+      - cp scripts/* deploy_bundle/ || true
       - echo "$ECR_REPO" > deploy_bundle/ECR_REPO
       - echo "BRANCH=$CODEBUILD_SOURCE_VERSION" > deploy_bundle/.deploy_meta
 
