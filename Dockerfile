@@ -1,6 +1,8 @@
-ARG BUILDER_BASE=ghcr.io/astral-sh/uv:python3.13-alpine
-ARG RUNTIME_BASE=python:3.13-alpine
+ARG BUILDER_BASE=public.ecr.aws/docker/library/python:3.13-alpine
+ARG RUNTIME_BASE=python:3.12-slim-trixie
 FROM ${BUILDER_BASE} AS builder
+# Install UV in the builder stage
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /app
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_CACHE_DIR=/root/.cache/uv/python
