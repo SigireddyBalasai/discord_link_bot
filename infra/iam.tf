@@ -31,6 +31,7 @@ resource "aws_iam_role_policy" "ec2_custom_policy" {
         Sid = "S3AccessToBundleBucket"
         Action = [
           "s3:GetObject",
+          "s3:GetObjectVersion",
           "s3:ListBucket"
         ]
         Effect = "Allow"
