@@ -4,6 +4,8 @@ set -e
 # Read ECR_REPO from file
 if [ -f ECR_REPO ]; then
   ECR_REPO=$(cat ECR_REPO)
+else
+  ECR_REPO="discord-bot-ecr_repository"
 fi
 
 # Pull latest image and start container
