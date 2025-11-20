@@ -12,11 +12,9 @@ if [ -f ECR_REPO ]; then
   ECR_REPO=$(cat ECR_REPO)
 fi
 
-REGION=us-east-1
-
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
-aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com
 
 echo "Logged into ECR"
 exit 0
