@@ -20,4 +20,4 @@ COPY . /app
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["python", "main.py"]
+CMD ["/app/.venv/bin/python", "main.py"]
