@@ -23,5 +23,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM ${RUNTIME_BASE} AS runtime
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/main.py /app/main.py
+COPY --from=builder /app/cogs /app/cogs
+COPY --from=builder /app/core /app/core
+COPY --from=builder /app/link_utils /app/link_utils
 ENV PATH="/app/.venv/bin:$PATH"
 CMD ["python", "main.py"]
