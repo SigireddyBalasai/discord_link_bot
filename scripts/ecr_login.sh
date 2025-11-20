@@ -7,19 +7,14 @@ if ! command -v aws >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-REGION=$(curl -s 'http://169.254.169.254/latest/dynamic/instance-identity/document' | jq -r .region || echo "${AWS_REGION}")
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-
-if [ -z "$ECR_REPO" ]; then
-  # Try to read repo name from terraform output if present
-  if command -v terraform >/dev/null 2>&1; then
-    ECR_REPO=$(cd "$(dirname "$0")/.." && terraform output -raw ecr_repo_name 2>/dev/null || true)
-  fi
-  if [ -z "$ECR_REPO" ]; then
-    echo "ECR_REPO not set"
-    exit 1
-  fi
+# Read ECR_REPO from file
+if [ -f ECR_REPO ]; then
+  ECR_REPO=$(cat ECR_REPO)
 fi
+
+REGION=${AWS_REGION}
+
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
 
