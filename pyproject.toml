@@ -17,7 +17,7 @@ project-includes = [
     "**/*.ipynb",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "ruff>=0.14.4",
     "pyright>=1.1.390",
