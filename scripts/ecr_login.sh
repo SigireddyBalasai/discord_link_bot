@@ -12,7 +12,7 @@ if [ -f ECR_REPO ]; then
   ECR_REPO=$(cat ECR_REPO)
 fi
 
-REGION=${AWS_REGION}
+REGION=us-east-1
 
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
