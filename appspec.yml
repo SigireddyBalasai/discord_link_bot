@@ -1,6 +1,6 @@
 version: 0.0
 os: linux
-# Updated hooks to reference scripts at root
+# Updated hooks to reference scripts at root - v2
 files:
   - source: /
     destination: /tmp/deploy
