@@ -4,6 +4,29 @@ Notes
 # Discord Link Bot
 
 This repo is set up to deploy the Discord bot to a single EC2 instance using CodeDeploy. All builds and deploys are handled through the CI pipeline; local deployment is not supported.
+
+## Configuration
+
+The bot requires the following environment variables:
+
+- `DISCORD_TOKEN`: Your Discord bot token (required)
+
+## Features
+
+- Monitors messages for links in configured channels
+- Categorizes links (YouTube, Twitter, Twitch, GitHub, etc.)
+- Forwards links to appropriate channels based on ACLs
+- Commands: `/ping`, `/stats`, `/invite`, `/support`, `/add_channel`, `/remove_channel`, `/list_channels`
+
+## Commands
+
+- `/ping`: Check bot latency
+- `/stats`: Show bot statistics (servers, users, latency)
+- `/invite`: Get the bot invite link
+- `/support`: Get support information
+- `/add_channel`: Add a channel for link forwarding
+- `/remove_channel`: Remove a channel from link forwarding
+- `/list_channels`: List configured channels
 ```
 ECR_REPO=$(terraform -chdir=infra output -raw ecr_repo_name)
 S3_BUCKET=discord-bot-deploy-471112640567
