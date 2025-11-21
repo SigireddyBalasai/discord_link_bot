@@ -21,5 +21,6 @@ COPY . /app
 RUN mkdir -p /app/core/data
 
 ENV PATH="/app/.venv/bin:$PATH"
+ENV DB_PATH="/data/bot_data.db"
 
 CMD ["/app/.venv/bin/python", "main.py"]

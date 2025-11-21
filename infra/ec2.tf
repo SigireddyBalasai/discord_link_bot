@@ -49,6 +49,10 @@ resource "aws_ebs_volume" "discord_data" {
   type              = var.ebs_type
   encrypted         = var.ebs_encrypted
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = merge(local.tags, { "Name" = "discord-bot-ebs" })
 }
 

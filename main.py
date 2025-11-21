@@ -64,7 +64,8 @@ async def main() -> None:
     logger.info("Initializing bot...")
     bot: DiscordBot = DiscordBot()
     logger.info("Initializing database...")
-    db: Database = Database()
+    db_path: str = os.getenv("DB_PATH", "core/data/bot_data.db")
+    db: Database = Database(db_path=db_path)
     bot.db = db
     await db.initialize()
     logger.info("Database initialized")
