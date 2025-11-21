@@ -1,16 +1,18 @@
 """
 Discord bot setup module.
 
-Defines the DiscordBot class with custom setup, error handling, and integration for database and enhanced help command.
+Defines the DiscordBot class with custom setup, error handling, and integration
+for database and enhanced help command.
 """
 
 import logging
+from logging import Logger
+
 import discord
 from discord import Intents
 from discord.ext import commands
 from pretty_help import PrettyHelp
 from .db.db_manager import Database
-from logging import Logger
 
 
 class DiscordBot(commands.Bot):
@@ -42,7 +44,7 @@ class DiscordBot(commands.Bot):
 
     async def on_ready(self) -> None:
         """Log bot readiness and registered slash commands."""
-        logger = logging.getLogger(__name__)
+        logger: Logger = logging.getLogger(__name__)
         if self.user:
             logger.info("Logged in as %s (ID: %s)", self.user, self.user.id)
         logger.info("Connected to %d guilds", len(self.guilds))
@@ -51,7 +53,7 @@ class DiscordBot(commands.Bot):
 
     async def on_guild_join(self, guild: discord.Guild) -> None:
         """Log when the bot joins a new guild."""
-        logger = logging.getLogger(__name__)
+        logger: Logger = logging.getLogger(__name__)
         logger.info("Joined guild: %s (ID: %s)", guild.name, guild.id)
 
     async def on_guild_remove(self, guild: discord.Guild) -> None:
@@ -68,7 +70,7 @@ class DiscordBot(commands.Bot):
             ctx: The command context where the error occurred.
             error: The exception that was raised.
         """
-        logger = logging.getLogger(__name__)
+        logger: Logger = logging.getLogger(__name__)
         try:
             if isinstance(error, commands.CommandNotFound):
                 await ctx.send(

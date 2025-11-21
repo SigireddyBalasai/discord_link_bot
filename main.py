@@ -54,7 +54,7 @@ async def main() -> None:
     and starts the bot using the provided Discord token.
     """
     setup_logging()
-    logger = logging.getLogger(__name__)
+    logger: logging.Logger = logging.getLogger(__name__)
     logger.info("Starting Discord Link Bot...")
 
     logger.info("Loading environment variables...")
@@ -62,14 +62,14 @@ async def main() -> None:
     logger.info("Environment variables loaded")
 
     logger.info("Initializing bot...")
-    bot = DiscordBot()
+    bot: DiscordBot = DiscordBot()
     logger.info("Initializing database...")
-    db = Database()
+    db: Database = Database()
     bot.db = db
     await db.initialize()
     logger.info("Database initialized")
 
-    token = os.getenv("DISCORD_TOKEN")
+    token: str | None = os.getenv("DISCORD_TOKEN")
     if token is None:
         logger.error("DISCORD_TOKEN environment variable not found")
         return
@@ -85,4 +85,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main=main())
+    asyncio.run(main())

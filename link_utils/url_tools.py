@@ -10,7 +10,14 @@ url_pattern = re.compile(r"(?:https?://|www\.)[^\s]+", re.IGNORECASE)
 
 
 def extract_urls(text: str) -> Optional[list[str]]:
-    """Extract all URLs from text. Returns None if input is empty or no URLs found."""
+    """Extract all URLs from text.
+
+    Args:
+        text: The input text to search for URLs.
+
+    Returns:
+        A list of extracted URLs, or None if no URLs are found or input is empty.
+    """
     if not text:
         return None
     matches = url_pattern.findall(text)

@@ -10,6 +10,22 @@ from discord.ext import commands
 
 logger = logging.getLogger(__name__)
 
+# Mapping of parameter names to ACL keys
+PARAM_TO_KEY = {
+    "youtube": "youtube",
+    "twitch": "twitch",
+    "twitter": "twitter",
+    "instagram": "instagram",
+    "tiktok": "tiktok",
+    "reddit": "reddit",
+    "github": "github",
+    "discord_links": "discord",
+    "other": "other",
+}
+
+# List of ACL keys
+LINK_TYPES = list(PARAM_TO_KEY.values())
+
 
 async def get_or_create_channel(
     ctx: commands.Context, name: str
@@ -24,8 +40,10 @@ async def get_or_create_channel(
         The text channel or None if creation failed.
     """
 
-    assert ctx.guild is not None  # This function is only called in guild contexts
-    existing = discord.utils.get(ctx.guild.channels, name=name)
+    assert ctx.guild is not None
+    existing: discord.abc.GuildChannel | None = discord.utils.get(
+        ctx.guild.channels, name=name
+    )
     if existing and isinstance(existing, discord.TextChannel):
         return existing
 
@@ -88,14 +106,4 @@ def create_acls(
     Returns:
         Dictionary of ACL settings.
     """
-    return {
-        "youtube": youtube,
-        "twitch": twitch,
-        "twitter": twitter,
-        "instagram": instagram,
-        "tiktok": tiktok,
-        "reddit": reddit,
-        "github": github,
-        "discord": discord_links,
-        "other": other,
-    }
+    return {PARAM_TO_KEY[param]: locals()[param] for param in PARAM_TO_KEY}

@@ -1,5 +1,12 @@
-from discord.abc import GuildChannel
+"""
+Link monitoring cog for Discord bot.
+
+This module contains the LinkMonitor cog that processes messages for links,
+categorizes them, and forwards them to configured output channels.
+"""
+
 import logging
+from discord.abc import GuildChannel
 import discord
 from discord.ext import commands
 from link_utils.categories import categorize_link
@@ -46,7 +53,6 @@ class LinkMonitor(commands.Cog):
         if message.author.bot or not message.guild:
             return
 
-        # Only process messages from text channels and threads
         if not isinstance(message.channel, (discord.TextChannel, discord.Thread)):
             return
 
@@ -56,7 +62,7 @@ class LinkMonitor(commands.Cog):
         if not urls:
             return
 
-        channel_name = getattr(message.channel, 'name', 'unknown')
+        channel_name = getattr(message.channel, "name", "unknown")
         logger.info(
             "Detected %d URLs in message from %s in #%s (guild: %s)",
             len(urls),
@@ -88,9 +94,13 @@ class LinkMonitor(commands.Cog):
             if message.channel.id == output_channel_config.channel_id:
                 continue
 
-            output_channel: GuildChannel | None = message.guild.get_channel(output_channel_config.channel_id)
+            output_channel: GuildChannel | None = message.guild.get_channel(
+                output_channel_config.channel_id
+            )
 
-            if not output_channel or not isinstance(output_channel, discord.TextChannel):
+            if not output_channel or not isinstance(
+                output_channel, discord.TextChannel
+            ):
                 logger.warning(
                     "Output channel %s not found or not a text channel",
                     output_channel_config.channel_id,
@@ -105,9 +115,7 @@ class LinkMonitor(commands.Cog):
         if sent_channels:
             try:
                 await message.delete()
-                logger.info(
-                    "Deleted original message with links in #%s", channel_name
-                )
+                logger.info("Deleted original message with links in #%s", channel_name)
             except discord.Forbidden:
                 channel_name = message.channel.name
                 logger.warning("Could not delete message in #%s", channel_name)
@@ -132,7 +140,6 @@ class LinkMonitor(commands.Cog):
             bot_user = channel.guild.me
             for webhook in webhooks:
                 if webhook.user and bot_user and webhook.user.id == bot_user.id:
-                    # Store webhook URL in database for persistence
                     await self.db.set_webhook_url(
                         channel.guild.id, channel.id, webhook.url
                     )
@@ -144,7 +151,6 @@ class LinkMonitor(commands.Cog):
 
         try:
             webhook = await channel.create_webhook(name="Link Monitor")
-            # Store webhook URL in database for persistence
             await self.db.set_webhook_url(channel.guild.id, channel.id, webhook.url)
             logger.info("Created new webhook for #%s", channel.name)
             return webhook
@@ -179,7 +185,9 @@ class LinkMonitor(commands.Cog):
             if getattr(output_channel_config, category, False):
                 webhook = await self._get_or_create_webhook(output_channel)
                 if webhook is None:
-                    logger.error("Could not create webhook for #%s", output_channel.name)
+                    logger.error(
+                        "Could not create webhook for #%s", output_channel.name
+                    )
                     continue
 
                 try:

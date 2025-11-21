@@ -1,10 +1,22 @@
+"""
+Link management cog for Discord bot.
+
+This module contains the LinkManager cog that provides commands for configuring
+link forwarding channels and ACLs for different link types.
+"""
+
 import logging
 import discord
 from discord.ext import commands
 from discord import ui
 from core.db.models import OutputChannel
 from core.db.db_manager import Database
-from core.channel_utils import get_or_create_channel, validate_acls, create_acls
+from core.channel_utils import (
+    get_or_create_channel,
+    validate_acls,
+    create_acls,
+    LINK_TYPES,
+)
 from core.bot_setup import DiscordBot
 
 logger: logging.Logger = logging.getLogger(name=__name__)
@@ -13,7 +25,9 @@ logger: logging.Logger = logging.getLogger(name=__name__)
 class ChannelSelectView(ui.View):
     """View for selecting a channel or creating a new one."""
 
-    def __init__(self, cog: "LinkManager", ctx: commands.Context, acls: dict[str, bool]) -> None:
+    def __init__(
+        self, cog: "LinkManager", ctx: commands.Context, acls: dict[str, bool]
+    ) -> None:
         super().__init__(timeout=300)  # 5 minutes timeout
         self.cog = cog
         self.ctx = ctx
@@ -21,35 +35,44 @@ class ChannelSelectView(ui.View):
 
     @ui.select(
         placeholder="Select a channel or create a new one...",
-        options=[]  # Will be populated in the command
+        options=[],
     )
-    async def channel_select(self, interaction: discord.Interaction, select: ui.Select) -> None:
+    async def channel_select(
+        self, interaction: discord.Interaction, select: ui.Select
+    ) -> None:
         """Handle channel selection."""
         if interaction.user != self.ctx.author:
-            await interaction.response.send_message("❌ Only the command author can use this menu!", ephemeral=True)
+            await interaction.response.send_message(
+                "❌ Only the command author can use this menu!", ephemeral=True
+            )
             return
 
-        selected_value = select.values[0]
-        
+        selected_value: str = select.values[0]
+
         if selected_value == "create_new":
-            # Ask for new channel name
-            await interaction.response.send_modal(ChannelNameModal(self.cog, self.ctx, self.acls))
+            await interaction.response.send_modal(
+                ChannelNameModal(self.cog, self.ctx, self.acls)
+            )
         elif selected_value == "too_many":
             await interaction.response.send_message(
                 "❌ This server has too many channels to display in the menu. Please contact an administrator to create channels manually.",
-                ephemeral=True
+                ephemeral=True,
             )
         else:
             # Use existing channel
             if self.ctx.guild is None:
-                await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+                await interaction.response.send_message(
+                    "❌ This command can only be used in a server!", ephemeral=True
+                )
                 return
-            channel_id = int(selected_value)
-            channel = self.ctx.guild.get_channel(channel_id)
+            channel_id: int = int(selected_value)
+            channel: discord.TextChannel | None = self.ctx.guild.get_channel(channel_id)
             if channel is None or not isinstance(channel, discord.TextChannel):
-                await interaction.response.send_message("❌ Channel not found or not a text channel!", ephemeral=True)
+                await interaction.response.send_message(
+                    "❌ Channel not found or not a text channel!", ephemeral=True
+                )
                 return
-            
+
             await self.cog._configure_channel(interaction, channel, self.acls)
 
 
@@ -60,10 +83,12 @@ class ChannelNameModal(ui.Modal, title="Create New Channel"):
         label="Channel Name",
         placeholder="Enter channel name (without #)",
         required=True,
-        max_length=100
+        max_length=100,
     )
 
-    def __init__(self, cog: "LinkManager", ctx: commands.Context, acls: dict[str, bool]) -> None:
+    def __init__(
+        self, cog: "LinkManager", ctx: commands.Context, acls: dict[str, bool]
+    ) -> None:
         super().__init__()
         self.cog = cog
         self.ctx = ctx
@@ -71,14 +96,20 @@ class ChannelNameModal(ui.Modal, title="Create New Channel"):
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         """Handle modal submission."""
-        channel_name = str(self.channel_name).strip()
+        channel_name: str = str(self.channel_name).strip()
         if not channel_name:
-            await interaction.response.send_message("❌ Channel name cannot be empty!", ephemeral=True)
+            await interaction.response.send_message(
+                "❌ Channel name cannot be empty!", ephemeral=True
+            )
             return
 
-        channel = await get_or_create_channel(self.ctx, channel_name)
+        channel: discord.TextChannel | None = await get_or_create_channel(
+            self.ctx, channel_name
+        )
         if channel is None:
-            await interaction.response.send_message("❌ Failed to create channel!", ephemeral=True)
+            await interaction.response.send_message(
+                "❌ Failed to create channel!", ephemeral=True
+            )
             return
 
         await self.cog._configure_channel(interaction, channel, self.acls)
@@ -99,16 +130,25 @@ class LinkManager(commands.Cog):
         self.db = db
 
     async def _configure_channel(
-        self, interaction: discord.Interaction, channel: discord.TextChannel, acls: dict[str, bool]
+        self,
+        interaction: discord.Interaction,
+        channel: discord.TextChannel,
+        acls: dict[str, bool],
     ) -> None:
-        """Configure a channel with the given ACLs."""
+        """Configure a channel with the given ACLs.
+
+        Args:
+            interaction: The Discord interaction.
+            channel: The text channel to configure.
+            acls: Dictionary of link type ACLs.
+        """
         assert interaction.guild is not None
         try:
             await self.db.add_output_channel(interaction.guild.id, channel.id, **acls)
 
             enabled_types = [name for name, enabled in acls.items() if enabled]
             action = "configured"
-            
+
             await interaction.response.send_message(
                 f"✅ Output Channel {action.title()}\n{channel.mention} will now receive:\n"
                 + "\n".join(f"• {t.capitalize()}" for t in enabled_types),
@@ -188,34 +228,31 @@ class LinkManager(commands.Cog):
             )
             return
 
-        # Create select options for all text channels
         options = []
         for channel in ctx.guild.text_channels:
             options.append(
                 discord.SelectOption(
                     label=f"#{channel.name}",
                     value=str(channel.id),
-                    description=f"Configure existing channel #{channel.name}"
+                    description=f"Configure existing channel #{channel.name}",
                 )
             )
-        
-        # Add option for creating new channel
+
         options.append(
             discord.SelectOption(
                 label="➕ Create New Channel",
                 value="create_new",
-                description="Create a new channel for link forwarding"
+                description="Create a new channel for link forwarding",
             )
         )
 
-        # Limit to 25 options (Discord's limit)
         if len(options) > 25:
-            options = options[:24]  # Keep 24 channels + create new option
+            options = options[:24]
             options.append(
                 discord.SelectOption(
                     label="⚠️ Too many channels",
                     value="too_many",
-                    description="Server has too many channels to display"
+                    description="Server has too many channels to display",
                 )
             )
 
@@ -306,17 +343,7 @@ class LinkManager(commands.Cog):
                 continue
 
             enabled_types = []
-            for link_type in [
-                "youtube",
-                "twitch",
-                "twitter",
-                "instagram",
-                "tiktok",
-                "reddit",
-                "github",
-                "discord",
-                "other",
-            ]:
+            for link_type in LINK_TYPES:
                 if getattr(config, link_type, False):
                     enabled_types.append(link_type.capitalize())
 
@@ -346,17 +373,7 @@ class LinkManager(commands.Cog):
             enabled: Whether to enable or disable this link type.
         """
         assert ctx.guild is not None
-        valid_types = [
-            "youtube",
-            "twitch",
-            "twitter",
-            "instagram",
-            "tiktok",
-            "reddit",
-            "github",
-            "discord",
-            "other",
-        ]
+        valid_types = LINK_TYPES
         link_type = link_type.lower()
 
         if link_type not in valid_types:
@@ -386,37 +403,6 @@ class LinkManager(commands.Cog):
             )
 
     @commands.hybrid_command(
-        name="test_link_forwarding",
-        description="Send a sample link to test detection and forwarding.",
-    )
-    async def test_link(
-        self, ctx: commands.Context, link_type: str = "youtube"
-    ) -> None:
-        """Test the link detection system by sending a sample link.
-
-        Args:
-            ctx: The command context.
-            link_type: Type of link to test (youtube, twitch, twitter, etc.).
-        """
-        test_links = {
-            "youtube": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-            "twitch": "https://www.twitch.tv/ninja",
-            "twitter": "https://twitter.com/example",
-            "instagram": "https://www.instagram.com/example",
-            "tiktok": "https://www.tiktok.com/@example",
-            "reddit": "https://www.reddit.com/r/example",
-            "github": "https://github.com/example/repo",
-            "discord": "https://discord.gg/example",
-            "other": "https://www.example.com",
-        }
-
-        link = test_links.get(link_type.lower(), test_links["other"])
-        await ctx.send(
-            f"Testing {link_type} link detection: {link}",
-            ephemeral=False,
-        )
-
-    @commands.hybrid_command(
         name="quick_link_setup",
         description="Create a channel that receives all link types in one step.",
     )
@@ -440,19 +426,8 @@ class LinkManager(commands.Cog):
             return
 
         try:
-            await self.db.add_output_channel(
-                ctx.guild.id,
-                channel.id,
-                youtube=True,
-                twitch=True,
-                twitter=True,
-                instagram=True,
-                tiktok=True,
-                reddit=True,
-                github=True,
-                discord=True,
-                other=True,
-            )
+            acls = {link_type: True for link_type in LINK_TYPES}
+            await self.db.add_output_channel(ctx.guild.id, channel.id, **acls)
 
             await ctx.send(
                 f"✅ Quick Setup Complete!\n{channel.mention} is now configured to receive all link types!\n\n"

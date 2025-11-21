@@ -3,11 +3,11 @@
 import logging
 from re import Pattern
 import re
-from typing import Final
+from typing import Final, Dict, List
 
 logger = logging.getLogger(__name__)
 
-link_categories = {
+link_categories: Dict[str, List[str]] = {
     "youtube": [
         r"(?:https?://)?(?:www\.)?(?:youtube\.com|youtu\.be)/",
         r"(?:https?://)?(?:www\.)?youtube\.com/watch",
@@ -51,38 +51,29 @@ LINK_TYPE_OTHER: Final[str] = "other"
 
 
 def categorize_link(url: str) -> str:
-    """Categorize a URL into a known link type."""
-    url_lower = url.lower()
-    if "youtube.com" in url_lower or "youtu.be" in url_lower:
-        logger.debug("Categorized URL as YouTube: %s", url)
-        return LINK_TYPE_YOUTUBE
-    if "twitter.com" in url_lower or "x.com" in url_lower:
-        logger.debug("Categorized URL as Twitter: %s", url)
-        return LINK_TYPE_TWITTER
-    if "reddit.com" in url_lower:
-        logger.debug("Categorized URL as Reddit: %s", url)
-        return LINK_TYPE_REDDIT
-    if "tiktok.com" in url_lower:
-        logger.debug("Categorized URL as TikTok: %s", url)
-        return LINK_TYPE_TIKTOK
-    if "instagram.com" in url_lower:
-        logger.debug("Categorized URL as Instagram: %s", url)
-        return LINK_TYPE_INSTAGRAM
-    if "github.com" in url_lower:
-        logger.debug("Categorized URL as GitHub: %s", url)
-        return LINK_TYPE_GITHUB
-    if "twitch.tv" in url_lower:
-        logger.debug("Categorized URL as Twitch: %s", url)
-        return LINK_TYPE_TWITCH
-    if "discord.gg" in url_lower or "discord.com/invite" in url_lower:
-        logger.debug("Categorized URL as Discord: %s", url)
-        return LINK_TYPE_DISCORD
-    logger.debug("Categorized URL as Other: %s", url)
+    """Categorize a URL into a known link type.
+
+    Args:
+        url: The URL string to categorize.
+
+    Returns:
+        The link type category (e.g., 'youtube', 'other').
+    """
+    patterns = get_category_patterns()
+    for category, regexes in patterns.items():
+        if any(regex.search(url) for regex in regexes):
+            logger.debug("Categorized URL as %s: %s", category, url)
+            return category
+    logger.debug("Categorized URL as %s: %s", LINK_TYPE_OTHER, url)
     return LINK_TYPE_OTHER
 
 
 def get_category_patterns() -> dict[str, list[Pattern[str]]]:
-    """Compile regex patterns for each link category in link_categories."""
+    """Compile regex patterns for each link category in link_categories.
+
+    Returns:
+        A dictionary mapping category names to lists of compiled regex patterns.
+    """
     return {
         category: [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
         for category, patterns in link_categories.items()

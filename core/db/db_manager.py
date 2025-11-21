@@ -57,7 +57,14 @@ class Database:
             raise
 
     async def get_links_channel(self, guild_id: int) -> Optional[int]:
-        """Return the links channel ID for a guild, or None if not set."""
+        """Return the links channel ID for a guild, or None if not set.
+
+        Args:
+            guild_id: The Discord guild ID.
+
+        Returns:
+            The channel ID if set, otherwise None.
+        """
         async with self.session():
             guild: GuildSettings | None = await GuildSettings.get_or_none(
                 guild_id=guild_id
@@ -73,7 +80,12 @@ class Database:
             return None
 
     async def set_links_channel(self, guild_id: int, channel_id: int) -> None:
-        """Set or update the links channel for a guild."""
+        """Set or update the links channel for a guild.
+
+        Args:
+            guild_id: The Discord guild ID.
+            channel_id: The channel ID to set as links channel.
+        """
         async with self.session():
             result: tuple[GuildSettings, bool] = await GuildSettings.get_or_create(
                 guild_id=guild_id, defaults={"links_channel_id": channel_id}
@@ -87,13 +99,13 @@ class Database:
             logger.info(
                 "Links channel %s for guild %s (%s)", action, guild_id, channel_id
             )
-            action = "created" if created else "updated"
-            logger.info(
-                "Links channel %s %s for guild %s", action, channel_id, guild_id
-            )
 
     async def remove_links_channel(self, guild_id: int) -> None:
-        """Remove the links channel setting for a guild."""
+        """Remove the links channel setting for a guild.
+
+        Args:
+            guild_id: The Discord guild ID.
+        """
         async with self.session():
             deleted_count: int = await GuildSettings.filter(guild_id=guild_id).delete()
             if deleted_count > 0:
@@ -106,7 +118,16 @@ class Database:
     async def add_output_channel(
         self, guild_id: int, channel_id: int, **acls: bool
     ) -> OutputChannel:
-        """Add or update an output channel with ACL configuration for a guild."""
+        """Add or update an output channel with ACL configuration for a guild.
+
+        Args:
+            guild_id: The Discord guild ID.
+            channel_id: The channel ID to configure.
+            **acls: Keyword arguments for link type ACLs (e.g., youtube=True).
+
+        Returns:
+            The OutputChannel instance.
+        """
         async with self.session():
             result: tuple[OutputChannel, bool] = await OutputChannel.get_or_create(
                 guild_id=guild_id, channel_id=channel_id, defaults=acls
@@ -131,7 +152,15 @@ class Database:
     async def get_output_channels(
         self, guild_id: int, link_type: Optional[str] = None
     ) -> List[OutputChannel]:
-        """Return all output channels for a guild, optionally filtered by link type."""
+        """Return all output channels for a guild, optionally filtered by link type.
+
+        Args:
+            guild_id: The Discord guild ID.
+            link_type: Optional link type to filter by (e.g., 'youtube').
+
+        Returns:
+            A list of OutputChannel instances.
+        """
         async with self.session():
             query: queryset.QuerySet[OutputChannel] = OutputChannel.filter(
                 guild_id=guild_id
@@ -151,7 +180,11 @@ class Database:
             return channels
 
     async def get_all_output_channels(self) -> List[OutputChannel]:
-        """Return all output channels across all guilds."""
+        """Return all output channels across all guilds.
+
+        Returns:
+            A list of all OutputChannel instances.
+        """
         async with self.session():
             channels = await OutputChannel.all()
             logger.debug("Retrieved %d output channels from all guilds", len(channels))
@@ -160,7 +193,15 @@ class Database:
     async def get_output_channel(
         self, guild_id: int, channel_id: int
     ) -> Optional[OutputChannel]:
-        """Return a specific output channel configuration for a guild and channel."""
+        """Return a specific output channel configuration for a guild and channel.
+
+        Args:
+            guild_id: The Discord guild ID.
+            channel_id: The channel ID.
+
+        Returns:
+            The OutputChannel instance or None if not found.
+        """
         async with self.session():
             channel = await OutputChannel.get_or_none(
                 guild_id=guild_id, channel_id=channel_id
@@ -180,7 +221,15 @@ class Database:
             return channel
 
     async def remove_output_channel(self, guild_id: int, channel_id: int) -> bool:
-        """Remove an output channel configuration for a guild and channel."""
+        """Remove an output channel configuration for a guild and channel.
+
+        Args:
+            guild_id: The Discord guild ID.
+            channel_id: The channel ID.
+
+        Returns:
+            True if a channel was removed, False otherwise.
+        """
         async with self.session():
             deleted_count: int = await OutputChannel.filter(
                 guild_id=guild_id, channel_id=channel_id
@@ -200,7 +249,17 @@ class Database:
     async def update_output_channel_acl(
         self, guild_id: int, channel_id: int, link_type: str, enabled: bool
     ) -> Optional[OutputChannel]:
-        """Update the ACL for a specific output channel and link type."""
+        """Update the ACL for a specific output channel and link type.
+
+        Args:
+            guild_id: The Discord guild ID.
+            channel_id: The channel ID.
+            link_type: The link type (e.g., 'youtube').
+            enabled: Whether to enable or disable the link type.
+
+        Returns:
+            The updated OutputChannel instance or None if not found.
+        """
         async with self.session():
             channel: OutputChannel | None = await OutputChannel.get_or_none(
                 guild_id=guild_id, channel_id=channel_id
@@ -226,7 +285,13 @@ class Database:
     async def set_webhook_url(
         self, guild_id: int, channel_id: int, webhook_url: str | None
     ) -> None:
-        """Store the webhook URL for an output channel."""
+        """Store the webhook URL for an output channel.
+
+        Args:
+            guild_id: The Discord guild ID.
+            channel_id: The channel ID.
+            webhook_url: The webhook URL to store, or None to clear.
+        """
         async with self.session():
             channel: OutputChannel | None = await OutputChannel.get_or_none(
                 guild_id=guild_id, channel_id=channel_id

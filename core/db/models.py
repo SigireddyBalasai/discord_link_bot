@@ -1,4 +1,5 @@
 """ORM models for Discord bot database."""
+
 import logging
 from tortoise.fields import (
     BigIntField,
