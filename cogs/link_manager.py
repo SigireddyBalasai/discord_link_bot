@@ -449,6 +449,21 @@ class LinkManager(commands.Cog):
                 ephemeral=True,
             )
 
+    @commands.hybrid_command(
+        name="support",
+        description="Get the link to the support server.",
+    )
+    async def support(self, ctx: commands.Context) -> None:
+        """Get the support server link.
+
+        Args:
+            ctx: The command context.
+        """
+        await ctx.send(
+            "Join our support server: https://discord.gg/WYJUCbENFu",
+            ephemeral=True,
+        )
+
     async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
         """Handle errors for all commands in this cog.
 
