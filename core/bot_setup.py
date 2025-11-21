@@ -38,6 +38,8 @@ class DiscordBot(commands.Bot):
         logger.info("LinkMonitor cog loaded successfully")
         await self.load_extension("cogs.link_manager")
         logger.info("LinkManager cog loaded successfully")
+        await self.load_extension("cogs.general")
+        logger.info("General cog loaded successfully")
         logger.info("Syncing slash commands...")
         await self.tree.sync()
         logger.info("Slash commands synced!")
