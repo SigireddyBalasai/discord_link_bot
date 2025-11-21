@@ -1,6 +1,6 @@
 resource "aws_iam_role" "codepipeline_role" {
   count = var.codecommit_name != "" ? 1 : 0
-  name  = "discord-codepipeline-role"
+  name  = "${local.name_prefix}-codepipeline-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -18,7 +18,7 @@ resource "aws_iam_role" "codepipeline_role" {
 
 resource "aws_iam_policy" "codepipeline_policy" {
   count = var.codecommit_name != "" ? 1 : 0
-  name  = "discord-codepipeline-policy"
+  name  = "${local.name_prefix}-codepipeline-policy"
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -79,7 +79,7 @@ resource "aws_iam_role_policy_attachment" "codepipeline_role_attach" {
 
 resource "aws_codepipeline" "discord_pipeline" {
   count    = var.codecommit_name != "" ? 1 : 0
-  name     = "discord-bot-pipeline"
+  name     = "${local.name_prefix}-pipeline"
   role_arn = aws_iam_role.codepipeline_role[0].arn
 
   artifact_store {

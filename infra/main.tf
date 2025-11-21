@@ -20,7 +20,7 @@ terraform {
 
 
 locals {
-  name_prefix = "discord-bot"
+  name_prefix = var.bot_name
 }
 
 locals {

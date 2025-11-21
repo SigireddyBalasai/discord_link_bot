@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "bot_name" {
+  description = "Name of the bot (used for resource naming and identification)"
+  type        = string
+  default     = "discord-bot"
+}
+
 variable "ami_family" {
   description = "AMI family to use. Supported: 'amzn2' or 'amzn2023'"
   type        = string

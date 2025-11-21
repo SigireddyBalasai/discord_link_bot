@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "codedeploy_bundles" {
-  bucket = terraform.workspace == "default" ? "discord-bot-codedeploy-bundles-${data.aws_region.current.name}" : "discord-bot-codedeploy-bundles-${data.aws_region.current.name}-${terraform.workspace}"
+  bucket = terraform.workspace == "default" ? "${local.name_prefix}-codedeploy-bundles-${data.aws_region.current.name}" : "${local.name_prefix}-codedeploy-bundles-${data.aws_region.current.name}-${terraform.workspace}"
 
 
 

@@ -1,6 +1,6 @@
 resource "aws_iam_role" "codebuild_role" {
   count = 1
-  name  = "discord-codebuild-role"
+  name  = "${local.name_prefix}-codebuild-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -16,7 +16,7 @@ resource "aws_iam_role" "codebuild_role" {
 
 resource "aws_iam_role_policy" "codebuild_policy" {
   count = 1
-  name  = "discord-codebuild-policy"
+  name  = "${local.name_prefix}-codebuild-policy"
   role  = aws_iam_role.codebuild_role[0].id
 
   policy = jsonencode({
@@ -75,7 +75,7 @@ resource "aws_iam_role_policy" "codebuild_policy" {
 
 resource "aws_codebuild_project" "discord_build" {
   count = 1
-  name  = "discord-bot-build"
+  name  = "${local.name_prefix}-build"
 
   service_role = aws_iam_role.codebuild_role[0].arn
 

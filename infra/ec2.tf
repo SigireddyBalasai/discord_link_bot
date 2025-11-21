@@ -1,5 +1,5 @@
 resource "aws_security_group" "discord_bot" {
-  name        = "discord-bot-sg"
+  name        = "${local.name_prefix}-sg"
   description = "Allow SSH and basic outbound for the bot"
   vpc_id      = module.vpc.vpc_id
 
@@ -18,7 +18,7 @@ resource "aws_security_group" "discord_bot" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(local.tags, { "Name" = "discord-bot-sg" })
+  tags = merge(local.tags, { "Name" = "${local.name_prefix}-sg" })
 }
 
 resource "aws_instance" "discord_bot" {
@@ -38,7 +38,7 @@ resource "aws_instance" "discord_bot" {
   }
 
 
-  tags = merge(local.tags, { "Name" = "discord-bot-instance", "CodeDeployEnv" = "discord-bot" })
+  tags = merge(local.tags, { "Name" = "${local.name_prefix}-instance", "CodeDeployEnv" = local.name_prefix })
 
   user_data = templatefile("./userdata.tpl", { aws_region = var.aws_region })
 }
@@ -53,7 +53,7 @@ resource "aws_ebs_volume" "discord_data" {
     prevent_destroy = true
   }
 
-  tags = merge(local.tags, { "Name" = "discord-bot-ebs" })
+  tags = merge(local.tags, { "Name" = "${local.name_prefix}-ebs" })
 }
 
 resource "aws_volume_attachment" "discord_data_attachment" {

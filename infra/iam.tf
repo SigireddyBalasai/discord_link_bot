@@ -1,5 +1,5 @@
 resource "aws_iam_role" "ec2_instance_role" {
-  name = "discord-bot-ec2-role"
+  name = "${local.name_prefix}-ec2-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -48,13 +48,22 @@ resource "aws_iam_role_policy" "ec2_custom_policy" {
           "logs:CreateLogGroup"
         ]
         Effect   = "Allow"
-        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/discord-bot/logs:*"
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/${local.name_prefix}/logs:*"
       },
       {
         Sid      = "CodedeployHookAccess"
         Action   = ["codedeploy:PutLifecycleEventHookExecutionStatus"]
         Effect   = "Allow"
         Resource = "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentgroup:${aws_codedeploy_app.discord_bot_app.name}/${aws_codedeploy_deployment_group.discord_bot_deployment_group.deployment_group_name}"
+      },
+      {
+        Sid      = "SSMParameterAccess"
+        Action   = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Effect   = "Allow"
+        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${local.name_prefix}/*"
       }
     ]
   })
@@ -92,7 +101,7 @@ resource "aws_iam_role_policy" "ec2_ecr_policy" {
 }
 
 resource "aws_iam_instance_profile" "ec2_instance" {
-  name = "discord-bot-instance-profile"
+  name = "${local.name_prefix}-instance-profile"
   role = aws_iam_role.ec2_instance_role.name
   tags = local.tags
 }

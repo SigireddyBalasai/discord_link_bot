@@ -11,6 +11,33 @@ The bot requires the following environment variables:
 
 - `DISCORD_TOKEN`: Your Discord bot token (required)
 
+### Setting up Environment Variables
+
+For **production deployment**, the bot retrieves the `DISCORD_TOKEN` from AWS Systems Manager Parameter Store:
+
+1. **Set up the SSM parameter:**
+   ```bash
+   ./scripts/setup_ssm_parameters.sh discord-bot YOUR_DISCORD_TOKEN_HERE
+   ```
+
+2. **The deployment script automatically retrieves** the token from SSM parameter `/discord-bot/DISCORD_TOKEN`
+
+For **local development**, create a `.env` file:
+```bash
+echo "DISCORD_TOKEN=your_discord_token_here" > .env
+```
+
+### Multi-Bot Support
+
+This infrastructure supports multiple bots. For additional bots:
+
+1. Update `infra/terraform.tfvars` with a new `bot_name`
+2. Run `terraform apply` to create new resources
+3. Set up SSM parameters: `./scripts/setup_ssm_parameters.sh <bot_name> <token>`
+4. Deploy the bot code
+
+See `infra/README-multi-bot.md` for detailed instructions.
+
 ## Features
 
 - Monitors messages for links in configured channels

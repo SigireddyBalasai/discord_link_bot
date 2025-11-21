@@ -2,6 +2,8 @@
 
 This directory contains Terraform configuration to provision a minimal EC2-based environment for running the Discord bot in Docker, with EBS-backed persistence and CodeDeploy-based CI/CD.
 
+**Note**: This infrastructure has been parameterized to support multiple Discord bots. See [README-multi-bot.md](README-multi-bot.md) for details on deploying multiple bots.
+
 ## Quick setup (safe defaults)
 
 1. Install Terraform and AWS CLI.

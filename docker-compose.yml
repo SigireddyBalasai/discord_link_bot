@@ -6,8 +6,11 @@ services:
     restart: unless-stopped
     volumes:
       - ./data:/data
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DB_PATH=/data/bot_data.db
     logging:
       driver: awslogs
       options:
-        awslogs-region: ${AWS_REGION}
-        awslogs-group: /discord-bot/logs
+        awslogs-region: ${AWS_REGION:-us-east-1}
+        awslogs-group: ${LOG_GROUP:-/discord-bot/logs}
