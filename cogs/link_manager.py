@@ -330,7 +330,7 @@ class LinkManager(commands.Cog):
 
         if not output_channels:
             await ctx.send(
-                "❌ No output channels configured. Use `/addoutput` to add one.",
+                "❌ No output channels configured. Use `/add_link_channel` to add one.",
                 ephemeral=True,
             )
             return
