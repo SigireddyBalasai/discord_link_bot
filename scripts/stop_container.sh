@@ -14,6 +14,10 @@ CONTAINER_NAME=${CONTAINER_NAME:-$BOT_NAME}
 # Stop and remove the running container if exists
 if docker ps -q --filter "name=${CONTAINER_NAME}" | grep -q .; then
   docker stop ${CONTAINER_NAME} || true
+fi
+
+# Remove the container if it exists (running or stopped)
+if docker ps -a -q --filter "name=${CONTAINER_NAME}" | grep -q .; then
   docker rm ${CONTAINER_NAME} || true
 fi
 
