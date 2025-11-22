@@ -51,7 +51,7 @@ variable "allowed_ssh_cidr" {
 variable "ebs_size" {
   description = "Size in GiB for the additional EBS volume."
   type        = number
-  default     = 5
+  default     = 1
 }
 
 variable "ebs_type" {
