@@ -29,7 +29,11 @@ phases:
   build:
     commands:
       - echo Building the Docker image...
-      - DOCKER_BUILDKIT=1 docker build -t $ECR_REPO:$IMAGE_TAG .
+      - |
+        DOCKER_BUILDKIT=1 docker build \
+          --cache-from type=registry,ref=$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:cache \
+          --cache-to type=registry,ref=$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:cache,mode=max \
+          -t $ECR_REPO:$IMAGE_TAG .
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest
