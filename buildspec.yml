@@ -29,7 +29,7 @@ phases:
   build:
     commands:
       - echo Building the Docker image...
-      # ARM64 build without cache
+      # ARM64 build without cache - updated
       - DOCKER_BUILDKIT=1 docker build -t $ECR_REPO:$IMAGE_TAG .
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
