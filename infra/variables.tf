@@ -19,7 +19,7 @@ variable "ami_family" {
 variable "ami_architecture" {
   description = "AMI architecture to use, e.g. 'x86_64' or 'aarch64'"
   type        = string
-  default     = "x86_64"
+  default     = "aarch64"
 }
 
 variable "ami_id" {
@@ -33,7 +33,7 @@ variable "ami_id" {
 variable "instance_type" {
   description = "EC2 instance type"
   type        = string
-  default     = "t3.nano"
+  default     = "t4g.nano"
 }
 
 
