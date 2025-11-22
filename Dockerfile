@@ -22,6 +22,8 @@ COPY --from=builder /app /app
 
 COPY . /app
 
+WORKDIR /app
+
 RUN mkdir -p /app/core/data
 
 ENV PATH="/app/.venv/bin:$PATH"
