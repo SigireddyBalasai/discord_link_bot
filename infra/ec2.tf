@@ -34,7 +34,8 @@ resource "aws_instance" "discord_bot" {
   monitoring = true
 
   metadata_options {
-    http_tokens = "required"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
   }
 
   root_block_device {
