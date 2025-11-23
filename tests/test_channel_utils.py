@@ -6,22 +6,22 @@ from core.channel_utils import validate_acls, create_acls
 class TestValidateAcls:
     """Test validate_acls function."""
 
-    def test_all_false(self):
+    def test_all_false(self) -> None:
         """Test with all ACLs false."""
         acls = {"youtube": False, "twitch": False, "twitter": False}
         assert validate_acls(acls) is False
 
-    def test_one_true(self):
+    def test_one_true(self) -> None:
         """Test with one ACL true."""
         acls = {"youtube": True, "twitch": False, "twitter": False}
         assert validate_acls(acls) is True
 
-    def test_all_true(self):
+    def test_all_true(self) -> None:
         """Test with all ACLs true."""
         acls = {"youtube": True, "twitch": True, "twitter": True}
         assert validate_acls(acls) is True
 
-    def test_empty_dict(self):
+    def test_empty_dict(self) -> None:
         """Test with empty dictionary."""
         acls = {}
         assert validate_acls(acls) is False
@@ -30,7 +30,7 @@ class TestValidateAcls:
 class TestCreateAcls:
     """Test create_acls function."""
 
-    def test_default(self):
+    def test_default(self) -> None:
         """Test default ACLs."""
         result = create_acls()
         expected = {
@@ -46,7 +46,7 @@ class TestCreateAcls:
         }
         assert result == expected
 
-    def test_some_true(self):
+    def test_some_true(self) -> None:
         """Test with some ACLs true."""
         result = create_acls(youtube=True, twitter=True)
         expected = {
@@ -62,7 +62,7 @@ class TestCreateAcls:
         }
         assert result == expected
 
-    def test_all_true(self):
+    def test_all_true(self) -> None:
         """Test with all ACLs true."""
         result = create_acls(
             youtube=True,

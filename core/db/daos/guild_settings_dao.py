@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseDAO:
-    def __init__(self, session: Any, table_name: str, region_name: str):
+    def __init__(self, session: Any, table_name: str, region_name: str) -> None:
         self._session = session
         self.table_name = table_name
         self.region_name = region_name

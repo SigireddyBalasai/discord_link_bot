@@ -6,6 +6,7 @@ Provides a clean, embed-based help interface for both prefix and slash commands.
 
 import discord
 from discord.ext import commands
+from collections.abc import Mapping
 
 
 class CustomHelpCommand(commands.HelpCommand):
@@ -20,7 +21,9 @@ class CustomHelpCommand(commands.HelpCommand):
             }
         )
 
-    async def send_bot_help(self, mapping: dict) -> None:
+    async def send_bot_help(
+        self, mapping: Mapping[commands.Cog | None, list[commands.Command]]
+    ) -> None:
         """Send help for all commands.
 
         Args:

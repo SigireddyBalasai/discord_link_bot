@@ -13,34 +13,34 @@ from link_utils.categories import (
 class TestCategorizeLink:
     """Test categorize_link function."""
 
-    def test_youtube_url(self):
+    def test_youtube_url(self) -> None:
         """Test YouTube URL categorization."""
         assert (
             categorize_link("https://www.youtube.com/watch?v=123") == LINK_TYPE_YOUTUBE
         )
         assert categorize_link("https://youtu.be/123") == LINK_TYPE_YOUTUBE
 
-    def test_twitter_url(self):
+    def test_twitter_url(self) -> None:
         """Test Twitter/X URL categorization."""
         assert categorize_link("https://twitter.com/user") == LINK_TYPE_TWITTER
         assert categorize_link("https://x.com/user") == LINK_TYPE_TWITTER
 
-    def test_other_url(self):
+    def test_other_url(self) -> None:
         """Test unknown URL categorization."""
         assert categorize_link("https://example.com") == LINK_TYPE_OTHER
 
-    def test_case_insensitive(self):
+    def test_case_insensitive(self) -> None:
         """Test case insensitivity."""
         assert categorize_link("HTTPS://YOUTUBE.COM/WATCH") == LINK_TYPE_YOUTUBE
 
-    def test_twitch_url(self):
+    def test_twitch_url(self) -> None:
         """Test Twitch URL categorization."""
         assert categorize_link("https://twitch.tv/user") == LINK_TYPE_TWITCH
 
-    def test_github_url(self):
+    def test_github_url(self) -> None:
         """Test GitHub URL categorization."""
         assert categorize_link("https://github.com/user/repo") == LINK_TYPE_GITHUB
 
-    def test_invalid_url(self):
+    def test_invalid_url(self) -> None:
         """Test invalid URL."""
         assert categorize_link("not a url") == LINK_TYPE_OTHER
