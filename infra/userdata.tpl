@@ -11,6 +11,11 @@ chmod +x ./install
 systemctl enable codedeploy-agent
 systemctl start codedeploy-agent
 
+# Install Docker
+yum install -y docker
+systemctl enable docker
+systemctl start docker
+
 # Run a simple docker container on start to make sure everything is OK
 # The container will later be stopped/started by CodeDeploy scripts.
 if [ ! -f /usr/local/bin/run-discord-bot ]; then
