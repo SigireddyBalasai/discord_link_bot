@@ -144,7 +144,7 @@ class LinkManager(commands.Cog):
         """
         assert interaction.guild is not None
         try:
-            await self.db.add_output_channel(interaction.guild.id, channel.id, **acls)
+            await self.db.output_channels.add_output_channel(interaction.guild.id, channel.id, **acls)
 
             enabled_types = [name for name, enabled in acls.items() if enabled]
             action = "configured"
@@ -289,7 +289,7 @@ class LinkManager(commands.Cog):
             channel.name,
         )
 
-        success = await self.db.remove_output_channel(ctx.guild.id, channel.id)
+        success = await self.db.output_channels.remove_output_channel(ctx.guild.id, channel.id)
 
         if success:
             await ctx.send(
@@ -324,7 +324,7 @@ class LinkManager(commands.Cog):
             ctx: The command context.
         """
         assert ctx.guild is not None
-        output_channels: list[OutputChannel] = await self.db.get_output_channels(
+        output_channels: list[OutputChannel] = await self.db.output_channels.get_output_channels(
             ctx.guild.id
         )
 
@@ -383,7 +383,7 @@ class LinkManager(commands.Cog):
             )
             return
 
-        result = await self.db.update_output_channel_acl(
+        result = await self.db.output_channels.update_output_channel_acl(
             ctx.guild.id,
             channel.id,
             link_type,
@@ -427,7 +427,7 @@ class LinkManager(commands.Cog):
 
         try:
             acls = {link_type: True for link_type in LINK_TYPES}
-            await self.db.add_output_channel(ctx.guild.id, channel.id, **acls)
+            await self.db.output_channels.add_output_channel(ctx.guild.id, channel.id, **acls)
 
             await ctx.send(
                 f"✅ Quick Setup Complete!\n{channel.mention} is now configured to receive all link types!\n\n"

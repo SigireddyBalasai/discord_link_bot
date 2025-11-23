@@ -71,7 +71,7 @@ class LinkMonitor(commands.Cog):
             message.guild.name,
         )
 
-        output_channels = await self.db.get_output_channels(message.guild.id)
+        output_channels = await self.db.output_channels.get_output_channels(message.guild.id)
         if not output_channels:
             logger.debug("No output channels configured for guild %s", message.guild.id)
             return
@@ -137,7 +137,7 @@ class LinkMonitor(commands.Cog):
             bot_user = channel.guild.me
             for webhook in webhooks:
                 if webhook.user and bot_user and webhook.user.id == bot_user.id:
-                    await self.db.set_webhook_url(
+                    await self.db.output_channels.set_webhook_url(
                         channel.guild.id, channel.id, webhook.url
                     )
                     logger.debug("Found existing webhook for #%s", channel.name)
@@ -148,7 +148,7 @@ class LinkMonitor(commands.Cog):
 
         try:
             webhook = await channel.create_webhook(name="Link Monitor")
-            await self.db.set_webhook_url(channel.guild.id, channel.id, webhook.url)
+            await self.db.output_channels.set_webhook_url(channel.guild.id, channel.id, webhook.url)
             logger.info("Created new webhook for #%s", channel.name)
             return webhook
         except discord.Forbidden:
