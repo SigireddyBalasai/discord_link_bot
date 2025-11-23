@@ -9,6 +9,10 @@ hooks:
     - location: stop_container.sh
       timeout: 180
 
+  AfterInstall:
+    - location: ecr_login.sh
+      timeout: 180
+
   ApplicationStart:
     - location: start_container.sh
       timeout: 180
