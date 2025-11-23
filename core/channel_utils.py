@@ -54,12 +54,18 @@ async def get_or_create_channel(
             reason=f"Created by {ctx.author} via bot command",
         )
     except discord.Forbidden:
+        logger.warning(
+            "Missing permissions to create channel '%s' in guild %s",
+            name,
+            ctx.guild.name if ctx.guild else "unknown",
+        )
         await ctx.send(
             "❌ I don't have permission to create channels!",
             ephemeral=True,
         )
         return None
     except discord.HTTPException as e:
+        logger.error("Error creating channel '%s': %s", name, e)
         await ctx.send(
             f"❌ Error creating channel: {e}",
             ephemeral=True,

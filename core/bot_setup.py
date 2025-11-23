@@ -84,7 +84,14 @@ class DiscordBot(commands.Bot):
                 await ctx.send("Invalid argument provided.")
             elif isinstance(error, commands.MissingPermissions):
                 logger.warning("Permission denied: %s", error)
+                await ctx.send("❌ You don't have permission to use this command.")
+            elif isinstance(error, commands.NoPrivateMessage):
+                await ctx.send("❌ This command cannot be used in private messages.")
+            elif isinstance(error, commands.CheckFailure):
+                logger.warning("Check failed: %s", error)
+                await ctx.send("❌ Command requirements not met.")
             else:
-                logger.error("Error: %s", error)
+                logger.error("Unexpected error: %s", error, exc_info=True)
+                await ctx.send("❌ An unexpected error occurred.")
         except discord.NotFound:
             logger.warning("Could not send error message - interaction expired")

@@ -50,25 +50,7 @@ LINK_TYPE_DISCORD: Final[str] = "discord"
 LINK_TYPE_OTHER: Final[str] = "other"
 
 
-def categorize_link(url: str) -> str:
-    """Categorize a URL into a known link type.
-
-    Args:
-        url: The URL string to categorize.
-
-    Returns:
-        The link type category (e.g., 'youtube', 'other').
-    """
-    patterns = get_category_patterns()
-    for category, regexes in patterns.items():
-        if any(regex.search(url) for regex in regexes):
-            logger.debug("Categorized URL as %s: %s", category, url)
-            return category
-    logger.debug("Categorized URL as %s: %s", LINK_TYPE_OTHER, url)
-    return LINK_TYPE_OTHER
-
-
-def get_category_patterns() -> dict[str, list[Pattern[str]]]:
+def _compile_patterns() -> dict[str, list[Pattern[str]]]:
     """Compile regex patterns for each link category in link_categories.
 
     Returns:
@@ -78,3 +60,22 @@ def get_category_patterns() -> dict[str, list[Pattern[str]]]:
         category: [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
         for category, patterns in link_categories.items()
     }
+
+# Cache compiled patterns at module level
+COMPILED_PATTERNS: Final[dict[str, list[Pattern[str]]]] = _compile_patterns()
+
+def categorize_link(url: str) -> str:
+    """Categorize a URL into a known link type.
+
+    Args:
+        url: The URL string to categorize.
+
+    Returns:
+        The link type category (e.g., 'youtube', 'other').
+    """
+    for category, regexes in COMPILED_PATTERNS.items():
+        if any(regex.search(url) for regex in regexes):
+            logger.debug("Categorized URL as %s: %s", category, url)
+            return category
+    logger.debug("Categorized URL as %s: %s", LINK_TYPE_OTHER, url)
+    return LINK_TYPE_OTHER
