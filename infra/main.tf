@@ -21,9 +21,6 @@ terraform {
 
 locals {
   name_prefix = var.bot_name
-}
-
-locals {
   tags = merge({
     Project   = local.name_prefix,
     ManagedBy = "Terraform"

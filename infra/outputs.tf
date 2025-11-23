@@ -19,6 +19,11 @@ output "codedeploy_app" {
   value = aws_codedeploy_app.discord_bot_app.name
 }
 
+output "dynamodb_table_name" {
+  value       = aws_dynamodb_table.discord_bot_table.name
+  description = "Name of the DynamoDB table"
+}
+
 output "s3_bucket" {
   value       = var.bundle_s3_bucket
   description = "S3 bucket to upload CodeDeploy bundles (create outside Terraform or set via var)"

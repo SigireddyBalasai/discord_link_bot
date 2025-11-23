@@ -38,7 +38,7 @@ variable "instance_type" {
 
 
 variable "allowed_ssh_cidr" {
-  description = "CIDR allowed to SSH into the EC2 instance (default 0.0.0.0/0). Set a narrower CIDR for production."
+  description = "CIDR allowed to SSH into the EC2 instance (default 0.0.0.0/0). WARNING: Set a narrower CIDR for production to improve security."
   type        = string
   default     = "0.0.0.0/0"
 }
@@ -48,23 +48,7 @@ variable "allowed_ssh_cidr" {
 
 
 
-variable "ebs_size" {
-  description = "Size in GiB for the additional EBS volume."
-  type        = number
-  default     = 1
-}
 
-variable "ebs_type" {
-  description = "EBS volume type to use for the additional EBS volume."
-  type        = string
-  default     = "gp3"
-}
-
-variable "ebs_encrypted" {
-  description = "Whether the additional EBS volume should be encrypted. Default true for production."
-  type        = bool
-  default     = true
-}
 
 variable "root_volume_encrypted" {
   description = "Whether the instance root block device should be encrypted."

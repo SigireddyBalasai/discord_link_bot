@@ -64,6 +64,21 @@ resource "aws_iam_role_policy" "ec2_custom_policy" {
         ]
         Effect   = "Allow"
         Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${local.name_prefix}/*"
+      },
+      {
+        Sid = "DynamoDBAccess"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ]
+        Effect = "Allow"
+        Resource = [
+          aws_dynamodb_table.discord_bot_table.arn
+        ]
       }
     ]
   })
