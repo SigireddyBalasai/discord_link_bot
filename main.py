@@ -7,6 +7,9 @@ Initializes logging, loads environment variables, sets up the bot and database, 
 import asyncio
 import os
 import logging
+from dotenv import load_dotenv
+from core.bot_setup import DiscordBot
+from core.db.db_manager import Database
 from core.logging_setup import setup_logging
 
 
