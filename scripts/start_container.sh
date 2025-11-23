@@ -17,7 +17,7 @@ AWS_REGION=${AWS_REGION:-us-east-1}
 # Retrieve DISCORD_TOKEN from SSM Parameter Store
 DISCORD_TOKEN_PARAM="/${BOT_NAME}/DISCORD_TOKEN"
 echo "Retrieving DISCORD_TOKEN from SSM parameter: ${DISCORD_TOKEN_PARAM}"
-DISCORD_TOKEN=$(aws ssm get-parameter --name "${DISCORD_TOKEN_PARAM}" --with-decryption --query Parameter.Value --output text 2>/dev/null)
+DISCORD_TOKEN=$(aws ssm get-parameter --name "${DISCORD_TOKEN_PARAM}" --with-decryption --query Parameter.Value --output text --region $AWS_REGION 2>/dev/null)
 
 if [ -z "$DISCORD_TOKEN" ] || [ "$DISCORD_TOKEN" = "None" ]; then
   echo "ERROR: Failed to retrieve DISCORD_TOKEN from SSM parameter ${DISCORD_TOKEN_PARAM}"
@@ -31,7 +31,7 @@ if [ -z "$ECR_REPO" ]; then
   docker pull discord-bot:latest || true
   image_name="discord-bot:latest"
 else
-  ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+  ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --region $AWS_REGION)
   image_name="${ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO}:latest"
   docker pull ${image_name}
 fi
