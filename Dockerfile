@@ -22,6 +22,8 @@ COPY --from=builder /app /app
 
 COPY . /app
 
+RUN ls -la /app
+
 WORKDIR /app
 
 RUN mkdir -p /app/core/data
