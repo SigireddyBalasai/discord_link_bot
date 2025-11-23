@@ -91,9 +91,6 @@ class LinkMonitor(commands.Cog):
             if output_channel_config.channel_id in sent_channels:
                 continue
 
-            if message.channel.id == output_channel_config.channel_id:
-                continue
-
             output_channel: GuildChannel | None = message.guild.get_channel(
                 output_channel_config.channel_id
             )
