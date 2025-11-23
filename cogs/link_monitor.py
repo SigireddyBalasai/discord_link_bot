@@ -76,6 +76,12 @@ class LinkMonitor(commands.Cog):
             logger.debug("No output channels configured for guild %s", message.guild.id)
             return
 
+        # Skip processing if the message is in an output channel
+        output_channel_ids = {config.channel_id for config in output_channels}
+        if message.channel.id in output_channel_ids:
+            logger.debug("Skipping message in output channel #%s", channel_name)
+            return
+
         links_by_category: dict[str, list[str]] = {}
         for url in urls:
             category = categorize_link(url)
