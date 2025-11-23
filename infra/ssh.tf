@@ -4,7 +4,7 @@ resource "tls_private_key" "discord_ssh" {
 }
 
 resource "aws_key_pair" "discord_ssh" {
-  key_name = "${local.name_prefix}-ssh"
+  key_name   = "${local.name_prefix}-ssh"
   public_key = tls_private_key.discord_ssh.public_key_openssh
 
   tags = local.tags
@@ -16,4 +16,4 @@ resource "local_file" "ssh_keyfile" {
   file_permission = "0600"
 }
 
- 
+

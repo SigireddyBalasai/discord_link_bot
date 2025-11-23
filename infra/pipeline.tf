@@ -162,9 +162,9 @@ resource "aws_cloudwatch_event_rule" "codecommit_trigger" {
 }
 
 resource "aws_cloudwatch_event_target" "codepipeline_target" {
-  count = var.codecommit_name != "" ? 1 : 0
-  rule  = aws_cloudwatch_event_rule.codecommit_trigger[0].name
-  arn   = aws_codepipeline.discord_pipeline[0].arn
+  count    = var.codecommit_name != "" ? 1 : 0
+  rule     = aws_cloudwatch_event_rule.codecommit_trigger[0].name
+  arn      = aws_codepipeline.discord_pipeline[0].arn
   role_arn = aws_iam_role.eventbridge_pipeline_role[0].arn
 }
 

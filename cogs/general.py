@@ -54,7 +54,9 @@ class General(commands.Cog):
         )
         embed.add_field(name="Servers", value=guild_count, inline=True)
         embed.add_field(name="Users", value=user_count, inline=True)
-        embed.add_field(name="Latency", value=f"{round(self.bot.latency * 1000)}ms", inline=True)
+        embed.add_field(
+            name="Latency", value=f"{round(self.bot.latency * 1000)}ms", inline=True
+        )
         embed.set_footer(text="Discord Link Bot v0.1.0")
 
         await ctx.send(embed=embed, ephemeral=True)

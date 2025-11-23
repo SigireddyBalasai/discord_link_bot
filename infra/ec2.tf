@@ -22,11 +22,11 @@ resource "aws_security_group" "discord_bot" {
 }
 
 resource "aws_instance" "discord_bot" {
-  ami                    = local.effective_ami_id
-  instance_type          = var.instance_type
-  key_name               = aws_key_pair.discord_ssh.key_name
-  subnet_id              = element(module.vpc.public_subnets, 0)
-  vpc_security_group_ids = [aws_security_group.discord_bot.id]
+  ami                         = local.effective_ami_id
+  instance_type               = var.instance_type
+  key_name                    = aws_key_pair.discord_ssh.key_name
+  subnet_id                   = element(module.vpc.public_subnets, 0)
+  vpc_security_group_ids      = [aws_security_group.discord_bot.id]
   associate_public_ip_address = true
 
   iam_instance_profile = aws_iam_instance_profile.ec2_instance.name
@@ -43,10 +43,14 @@ resource "aws_instance" "discord_bot" {
   }
 
 
+
+
   tags = merge(local.tags, { "Name" = "${local.name_prefix}-instance", "CodeDeployEnv" = local.name_prefix })
 
   user_data = templatefile("./userdata.tpl", {
     aws_region          = var.aws_region
     dynamodb_table_name = aws_dynamodb_table.discord_bot_table.name
+    aws_account_id      = data.aws_caller_identity.current.account_id
   })
 }
+

@@ -28,7 +28,7 @@ variable "ami_id" {
   default     = ""
 }
 
- 
+
 
 variable "instance_type" {
   description = "EC2 instance type"
@@ -74,7 +74,7 @@ variable "bundle_s3_bucket" {
   default     = ""
 }
 
- 
+
 
 variable "ecr_force_delete" {
   description = "Whether Terraform will force delete the repository on destroy (true will delete even if images present)"

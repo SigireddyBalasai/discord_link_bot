@@ -57,8 +57,8 @@ resource "aws_iam_role_policy" "ec2_custom_policy" {
         Resource = "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentgroup:${aws_codedeploy_app.discord_bot_app.name}/${aws_codedeploy_deployment_group.discord_bot_deployment_group.deployment_group_name}"
       },
       {
-        Sid      = "SSMParameterAccess"
-        Action   = [
+        Sid = "SSMParameterAccess"
+        Action = [
           "ssm:GetParameter",
           "ssm:GetParameters"
         ]
@@ -73,7 +73,8 @@ resource "aws_iam_role_policy" "ec2_custom_policy" {
           "dynamodb:UpdateItem",
           "dynamodb:DeleteItem",
           "dynamodb:Query",
-          "dynamodb:Scan"
+          "dynamodb:Scan",
+          "dynamodb:DescribeTable"
         ]
         Effect = "Allow"
         Resource = [

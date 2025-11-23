@@ -4,7 +4,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 import aioboto3
 from boto3.dynamodb.conditions import Key
@@ -26,9 +26,11 @@ class Database:
         self.table_name = table_name or os.getenv("DYNAMODB_TABLE_NAME")
         if not self.table_name:
             # Fallback for local testing if env var not set, though it should be.
-            logger.warning("DYNAMODB_TABLE_NAME not set, defaulting to 'discord-bot-table'")
+            logger.warning(
+                "DYNAMODB_TABLE_NAME not set, defaulting to 'discord-bot-table'"
+            )
             self.table_name = "discord-bot-table"
-        
+
         self.region_name = os.getenv("AWS_REGION", "us-east-1")
         self._session = aioboto3.Session()
         self._initialized: bool = False
@@ -38,7 +40,9 @@ class Database:
         if self._initialized:
             return
 
-        async with self._session.resource("dynamodb", region_name=self.region_name) as dynamodb:
+        async with self._session.resource(
+            "dynamodb", region_name=self.region_name
+        ) as dynamodb:
             table = await dynamodb.Table(self.table_name)
             try:
                 # Just check if we can access the table
@@ -46,7 +50,9 @@ class Database:
                 logger.info(f"Connected to DynamoDB table: {self.table_name}")
                 self._initialized = True
             except Exception as e:
-                logger.error(f"Failed to connect to DynamoDB table {self.table_name}: {e}")
+                logger.error(
+                    f"Failed to connect to DynamoDB table {self.table_name}: {e}"
+                )
                 raise
 
     async def close(self) -> None:
@@ -59,8 +65,10 @@ class Database:
         """Provide an async context manager for the DynamoDB table."""
         if not self._initialized:
             await self.initialize()
-        
-        async with self._session.resource("dynamodb", region_name=self.region_name) as dynamodb:
+
+        async with self._session.resource(
+            "dynamodb", region_name=self.region_name
+        ) as dynamodb:
             yield await dynamodb.Table(self.table_name)
 
     # --- Guild Settings ---
@@ -85,7 +93,7 @@ class Database:
             settings = GuildSettings(
                 guild_id=guild_id,
                 links_channel_id=channel_id,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(timezone.utc),
             )
             # Dump to dict
             item = settings.model_dump()
@@ -102,9 +110,7 @@ class Database:
     async def remove_links_channel(self, guild_id: int) -> None:
         """Remove the links channel setting for a guild."""
         async with self._table() as table:
-            await table.delete_item(
-                Key={"pk": f"GUILD#{guild_id}", "sk": "SETTINGS"}
-            )
+            await table.delete_item(Key={"pk": f"GUILD#{guild_id}", "sk": "SETTINGS"})
             logger.info("Removed links channel setting for guild %s", guild_id)
 
     # --- Output Channels ---
@@ -119,28 +125,27 @@ class Database:
                 Key={"pk": f"GUILD#{guild_id}", "sk": f"CHANNEL#{channel_id}"}
             )
             existing_item = response.get("Item", {})
-            
+
             if existing_item:
                 # Update existing
                 model = OutputChannel(**existing_item)
                 for k, v in acls.items():
                     if hasattr(model, k):
                         setattr(model, k, v)
-                model.updated_at = datetime.utcnow()
+                model.updated_at = datetime.now(timezone.utc)
             else:
                 # Create new
-                model = OutputChannel(
-                    guild_id=guild_id,
-                    channel_id=channel_id,
-                    **acls
-                )
+                model = OutputChannel(guild_id=guild_id, channel_id=channel_id)
+                for k, v in acls.items():
+                    if hasattr(model, k):
+                        setattr(model, k, v)
 
             item = model.model_dump()
             item["pk"] = f"GUILD#{guild_id}"
             item["sk"] = f"CHANNEL#{channel_id}"
             item["created_at"] = item["created_at"].isoformat()
             item["updated_at"] = item["updated_at"].isoformat()
-            
+
             await table.put_item(Item=item)
             logger.info("Updated output channel %s for guild %s", channel_id, guild_id)
             return model
@@ -151,10 +156,11 @@ class Database:
         """Return all output channels for a guild, optionally filtered by link type."""
         async with self._table() as table:
             response = await table.query(
-                KeyConditionExpression=Key("pk").eq(f"GUILD#{guild_id}") & Key("sk").begins_with("CHANNEL#")
+                KeyConditionExpression=Key("pk").eq(f"GUILD#{guild_id}")
+                & Key("sk").begins_with("CHANNEL#")
             )
             items = response.get("Items", [])
-            
+
             channels = []
             for item in items:
                 try:
@@ -166,7 +172,7 @@ class Database:
                         channels.append(channel)
                 except Exception as e:
                     logger.error(f"Failed to parse output channel item: {e}")
-            
+
             return channels
 
     async def get_all_output_channels(self) -> List[OutputChannel]:
@@ -174,7 +180,7 @@ class Database:
         async with self._table() as table:
             response = await table.scan()
             items = response.get("Items", [])
-            
+
             channels = []
             for item in items:
                 if item.get("sk", "").startswith("CHANNEL#"):
@@ -216,8 +222,8 @@ class Database:
         if channel:
             if hasattr(channel, link_type):
                 setattr(channel, link_type, enabled)
-                channel.updated_at = datetime.utcnow()
-                
+                channel.updated_at = datetime.now(timezone.utc)
+
                 async with self._table() as table:
                     item = channel.model_dump()
                     item["pk"] = f"GUILD#{guild_id}"
@@ -235,8 +241,8 @@ class Database:
         channel = await self.get_output_channel(guild_id, channel_id)
         if channel:
             channel.webhook_url = webhook_url
-            channel.updated_at = datetime.utcnow()
-            
+            channel.updated_at = datetime.now(timezone.utc)
+
             async with self._table() as table:
                 item = channel.model_dump()
                 item["pk"] = f"GUILD#{guild_id}"
@@ -259,9 +265,7 @@ class Database:
                 KeyConditionExpression=Key("pk").eq(f"GUILD#{guild_id}")
             )
             items = response.get("Items", [])
-            
+
             for item in items:
-                await table.delete_item(
-                    Key={"pk": item["pk"], "sk": item["sk"]}
-                )
+                await table.delete_item(Key={"pk": item["pk"], "sk": item["sk"]})
             logger.info("Cleared all data for guild %s", guild_id)
