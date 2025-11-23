@@ -2,7 +2,7 @@
 set -e
 
 # Login to AWS ECR using aws-cli
-if ! command -v aws >/dev/null 2>&1 || ! command -v docker >/dev/null 2>&1; then
+if ! [ -x /usr/bin/aws ] || ! [ -x /usr/bin/docker ]; then
   echo "aws-cli or docker missing"
   exit 1
 fi
