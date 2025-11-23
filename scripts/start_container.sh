@@ -48,6 +48,7 @@ docker run -d --name ${CONTAINER_NAME} \
   --log-opt awslogs-group=${LOG_GROUP} \
   --log-opt awslogs-region=${AWS_REGION} \
   -e DISCORD_TOKEN="${DISCORD_TOKEN}" \
+  -e AWS_REGION="${AWS_REGION}" \
   -e DYNAMODB_TABLE_NAME="discord-bot-table" \
   -e DB_PATH="/data/bot_data.db" \
   ${image_name}
