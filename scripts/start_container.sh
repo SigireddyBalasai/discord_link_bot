@@ -42,6 +42,7 @@ LOG_GROUP=${LOG_GROUP:-/discord-bot/logs}
 AWS_REGION=${AWS_REGION:-us-east-1}
 
 docker run -d --name ${CONTAINER_NAME} \
+  --network host \
   --restart unless-stopped \
   -v /data:/data \
   --log-driver awslogs \
