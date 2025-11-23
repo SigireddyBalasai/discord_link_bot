@@ -24,7 +24,18 @@ resource "aws_s3_bucket_lifecycle_configuration" "codedeploy_bundles_lifecycle" 
       prefix = ""
     }
     noncurrent_version_expiration {
-      noncurrent_days = 30
+      noncurrent_days = 1
+    }
+  }
+
+  rule {
+    id     = "expire-old-artifacts"
+    status = "Enabled"
+    filter {
+      prefix = "${local.name_prefix}-pipeline/"
+    }
+    expiration {
+      days = 5
     }
   }
 }

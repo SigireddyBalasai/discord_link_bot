@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+# Install CodeDeploy agent
+yum update -y
+yum install -y ruby wget
+cd /home/ec2-user
+wget https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install
+chmod +x ./install
+./install auto
+systemctl enable codedeploy-agent
+systemctl start codedeploy-agent
+
 # Run a simple docker container on start to make sure everything is OK
 # The container will later be stopped/started by CodeDeploy scripts.
 if [ ! -f /usr/local/bin/run-discord-bot ]; then
