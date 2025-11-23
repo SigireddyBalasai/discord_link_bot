@@ -7,6 +7,7 @@ This module contains general-purpose commands that don't fit into specific cogs.
 import logging
 import discord
 from discord.ext import commands
+from core.bot_setup import DiscordBot
 
 logger: logging.Logger = logging.getLogger(name=__name__)
 
@@ -26,7 +27,7 @@ class General(commands.Cog):
         name="ping",
         description="Check bot latency.",
     )
-    async def ping(self, ctx: commands.Context) -> None:
+    async def ping(self, ctx: commands.Context[DiscordBot]) -> None:
         """Check the bot's latency.
 
         Args:
@@ -39,7 +40,7 @@ class General(commands.Cog):
         name="stats",
         description="Show bot statistics.",
     )
-    async def stats(self, ctx: commands.Context) -> None:
+    async def stats(self, ctx: commands.Context[DiscordBot]) -> None:
         """Show bot statistics.
 
         Args:
@@ -65,7 +66,7 @@ class General(commands.Cog):
         name="invite",
         description="Get the bot invite link.",
     )
-    async def invite(self, ctx: commands.Context) -> None:
+    async def invite(self, ctx: commands.Context[DiscordBot]) -> None:
         """Get the bot invite link.
 
         Args:

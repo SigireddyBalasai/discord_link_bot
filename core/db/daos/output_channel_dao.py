@@ -7,6 +7,7 @@ from core.db.daos.guild_settings_dao import BaseDAO
 
 logger = logging.getLogger(__name__)
 
+
 class OutputChannelDAO(BaseDAO):
     async def add_output_channel(
         self, guild_id: int, channel_id: int, **acls: bool
@@ -23,12 +24,16 @@ class OutputChannelDAO(BaseDAO):
                 for k, v in acls.items():
                     if hasattr(model, k):
                         setattr(model, k, v)
+                    else:
+                        logger.warning("Ignoring invalid ACL key: %s", k)
                 model.updated_at = datetime.now(timezone.utc)
             else:
                 model = OutputChannel(guild_id=guild_id, channel_id=channel_id)
                 for k, v in acls.items():
                     if hasattr(model, k):
                         setattr(model, k, v)
+                    else:
+                        logger.warning("Ignoring invalid ACL key: %s", k)
 
             item = model.model_dump()
             item["pk"] = f"GUILD#{guild_id}"
@@ -36,9 +41,15 @@ class OutputChannelDAO(BaseDAO):
             item["created_at"] = item["created_at"].isoformat()
             item["updated_at"] = item["updated_at"].isoformat()
 
-            await table.put_item(Item=item)
-            logger.info("Updated output channel %s for guild %s", channel_id, guild_id)
-            return model
+            try:
+                await table.put_item(Item=item)
+                logger.info(
+                    "Updated output channel %s for guild %s", channel_id, guild_id
+                )
+                return model
+            except Exception as e:
+                logger.error("Failed to save output channel %s: %s", channel_id, e)
+                raise
 
     async def get_output_channels(
         self, guild_id: int, link_type: Optional[str] = None
@@ -62,6 +73,7 @@ class OutputChannelDAO(BaseDAO):
                         channels.append(channel)
                 except Exception as e:
                     logger.error(f"Failed to parse output channel item: {e}")
+                    continue
 
             return channels
 
@@ -76,8 +88,11 @@ class OutputChannelDAO(BaseDAO):
                 if item.get("sk", "").startswith("CHANNEL#"):
                     try:
                         channels.append(OutputChannel(**item))
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.error(
+                            f"Failed to parse output channel item during scan: {e}"
+                        )
+                        continue
             return channels
 
     async def get_output_channel(

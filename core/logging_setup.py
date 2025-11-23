@@ -2,6 +2,7 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 
+
 def setup_logging() -> None:
     """Set up logging configuration with console and file output."""
     logger = logging.getLogger()

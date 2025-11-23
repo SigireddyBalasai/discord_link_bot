@@ -6,6 +6,7 @@ from core.db.models import GuildSettings
 
 logger = logging.getLogger(__name__)
 
+
 class BaseDAO:
     def __init__(self, session: Any, table_name: str, region_name: str):
         self._session = session
@@ -19,6 +20,7 @@ class BaseDAO:
             "dynamodb", region_name=self.region_name
         ) as dynamodb:
             yield await dynamodb.Table(self.table_name)
+
 
 class GuildSettingsDAO(BaseDAO):
     async def get_links_channel(self, guild_id: int) -> Optional[int]:

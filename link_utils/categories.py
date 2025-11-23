@@ -61,7 +61,9 @@ def _compile_patterns() -> dict[str, list[Pattern[str]]]:
         for category, patterns in link_categories.items()
     }
 
+
 COMPILED_PATTERNS: Final[dict[str, list[Pattern[str]]]] = _compile_patterns()
+
 
 def categorize_link(url: str) -> str:
     """Categorize a URL into a known link type.

@@ -11,7 +11,7 @@ from logging import Logger
 import discord
 from discord import Intents
 from discord.ext import commands
-from pretty_help import PrettyHelp
+from cogs.help import CustomHelpCommand
 from .db.db_manager import Database
 
 
@@ -19,14 +19,14 @@ class DiscordBot(commands.Bot):
     """Custom Discord bot with database integration and enhanced help command."""
 
     def __init__(self) -> None:
-        """Initialize the DiscordBot with intents and a pretty help command."""
+        """Initialize the DiscordBot with intents and custom help command."""
         intents: Intents = Intents.default()
         intents.message_content = True
         intents.members = True
         super().__init__(
             command_prefix="!",
             intents=intents,
-            help_command=PrettyHelp(color=discord.Color.blue()),
+            help_command=CustomHelpCommand(),
         )
         self.db: Database | None = None
 

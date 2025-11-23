@@ -26,7 +26,10 @@ class ChannelSelectView(ui.View):
     """View for selecting a channel or creating a new one."""
 
     def __init__(
-        self, cog: "LinkManager", ctx: commands.Context, acls: dict[str, bool]
+        self,
+        cog: "LinkManager",
+        ctx: commands.Context[DiscordBot],
+        acls: dict[str, bool],
     ) -> None:
         super().__init__(timeout=300)  # 5 minutes timeout
         self.cog = cog
@@ -66,7 +69,7 @@ class ChannelSelectView(ui.View):
                 )
                 return
             channel_id: int = int(selected_value)
-            channel: discord.TextChannel | None = self.ctx.guild.get_channel(channel_id)
+            channel = self.ctx.guild.get_channel(channel_id)
             if channel is None or not isinstance(channel, discord.TextChannel):
                 await interaction.response.send_message(
                     "❌ Channel not found or not a text channel!", ephemeral=True
@@ -79,7 +82,7 @@ class ChannelSelectView(ui.View):
 class ChannelNameModal(ui.Modal, title="Create New Channel"):
     """Modal for entering a new channel name."""
 
-    channel_name = ui.TextInput(
+    channel_name: ui.TextInput = ui.TextInput(
         label="Channel Name",
         placeholder="Enter channel name (without #)",
         required=True,
@@ -87,7 +90,10 @@ class ChannelNameModal(ui.Modal, title="Create New Channel"):
     )
 
     def __init__(
-        self, cog: "LinkManager", ctx: commands.Context, acls: dict[str, bool]
+        self,
+        cog: "LinkManager",
+        ctx: commands.Context[DiscordBot],
+        acls: dict[str, bool],
     ) -> None:
         super().__init__()
         self.cog = cog
@@ -144,7 +150,9 @@ class LinkManager(commands.Cog):
         """
         assert interaction.guild is not None
         try:
-            await self.db.output_channels.add_output_channel(interaction.guild.id, channel.id, **acls)
+            await self.db.output_channels.add_output_channel(
+                interaction.guild.id, channel.id, **acls
+            )
 
             enabled_types = [name for name, enabled in acls.items() if enabled]
             action = "configured"
@@ -172,7 +180,7 @@ class LinkManager(commands.Cog):
         description="Add or configure a channel to receive specific types of links.",
     )
     @commands.guild_only()
-    @commands.has_permissions(manage_channels=True)  # pyrefly: ignore
+    @commands.has_permissions(manage_channels=True)
     async def add_output(
         self,
         ctx: commands.Context,
@@ -257,7 +265,8 @@ class LinkManager(commands.Cog):
             )
 
         view = ChannelSelectView(self, ctx, acls)
-        view.channel_select.options = options
+        select_menu = view.channel_select
+        select_menu.options = options
 
         await ctx.send(
             "Select a channel to configure for link forwarding:",
@@ -269,10 +278,10 @@ class LinkManager(commands.Cog):
         description="Remove a channel from receiving forwarded links.",
     )
     @commands.guild_only()
-    @commands.has_permissions(manage_channels=True)  # pyrefly: ignore
+    @commands.has_permissions(manage_channels=True)
     async def remove_output(
         self,
-        ctx: commands.Context,
+        ctx: commands.Context[DiscordBot],
         channel: discord.TextChannel,
     ) -> None:
         """Remove an output channel configuration.
@@ -289,7 +298,9 @@ class LinkManager(commands.Cog):
             channel.name,
         )
 
-        success = await self.db.output_channels.remove_output_channel(ctx.guild.id, channel.id)
+        success = await self.db.output_channels.remove_output_channel(
+            ctx.guild.id, channel.id
+        )
 
         if success:
             await ctx.send(
@@ -317,16 +328,16 @@ class LinkManager(commands.Cog):
         description="Show all channels set to receive forwarded links and their filters.",
     )
     @commands.guild_only()
-    async def list_outputs(self, ctx: commands.Context) -> None:
+    async def list_outputs(self, ctx: commands.Context[DiscordBot]) -> None:
         """List all configured output channels and their ACL settings.
 
         Args:
             ctx: The command context.
         """
         assert ctx.guild is not None
-        output_channels: list[OutputChannel] = await self.db.output_channels.get_output_channels(
-            ctx.guild.id
-        )
+        output_channels: list[
+            OutputChannel
+        ] = await self.db.output_channels.get_output_channels(ctx.guild.id)
 
         if not output_channels:
             await ctx.send(
@@ -356,10 +367,10 @@ class LinkManager(commands.Cog):
         description="Enable or disable a specific link type for a channel.",
     )
     @commands.guild_only()
-    @commands.has_permissions(manage_channels=True)  # pyrefly: ignore
+    @commands.has_permissions(manage_channels=True)
     async def update_acl(
         self,
-        ctx: commands.Context,
+        ctx: commands.Context[DiscordBot],
         channel: discord.TextChannel,
         link_type: str,
         enabled: bool,
@@ -407,9 +418,9 @@ class LinkManager(commands.Cog):
         description="Create a channel that receives all link types in one step.",
     )
     @commands.guild_only()
-    @commands.has_permissions(manage_channels=True)  # pyrefly: ignore
+    @commands.has_permissions(manage_channels=True)
     async def quick_setup(
-        self, ctx: commands.Context, channel_name: str = "links"
+        self, ctx: commands.Context[DiscordBot], channel_name: str = "links"
     ) -> None:
         """Quick setup to create a channel that receives all link types.
 
@@ -427,7 +438,9 @@ class LinkManager(commands.Cog):
 
         try:
             acls = {link_type: True for link_type in LINK_TYPES}
-            await self.db.output_channels.add_output_channel(ctx.guild.id, channel.id, **acls)
+            await self.db.output_channels.add_output_channel(
+                ctx.guild.id, channel.id, **acls
+            )
 
             await ctx.send(
                 f"✅ Quick Setup Complete!\n{channel.mention} is now configured to receive all link types!\n\n"
@@ -453,7 +466,7 @@ class LinkManager(commands.Cog):
         name="support",
         description="Get the link to the support server.",
     )
-    async def support(self, ctx: commands.Context) -> None:
+    async def support(self, ctx: commands.Context[DiscordBot]) -> None:
         """Get the support server link.
 
         Args:
