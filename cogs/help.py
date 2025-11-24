@@ -57,6 +57,7 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
             interaction: The interaction that triggered this command.
             command: Optional command name to get help for.
         """
+        await interaction.response.defer(ephemeral=False)
         bot = interaction.client
         ctx = await commands.Context.from_interaction(interaction)
         ctx.bot = bot
