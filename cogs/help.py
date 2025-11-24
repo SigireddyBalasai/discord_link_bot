@@ -8,6 +8,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from collections.abc import Mapping
+from core.version import get_version_string
 
 
 class CustomHelpCommand(commands.HelpCommand, commands.Cog):
@@ -101,7 +102,7 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
                 inline=False,
             )
 
-        embed.set_footer(text="Use !help <command> for detailed information")
+        embed.set_footer(text=f"Use !help <command> for detailed information | {get_version_string()}")
 
         await self.get_destination().send(embed=embed)
 
