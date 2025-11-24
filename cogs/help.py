@@ -4,11 +4,14 @@ Custom help command for Discord bot.
 Provides a clean, embed-based help interface for both prefix and slash commands.
 """
 
+import logging
 import discord
 from discord import app_commands
 from discord.ext import commands
 from collections.abc import Mapping
 from core.version import get_version_string
+
+logger = logging.getLogger(__name__)
 
 
 class CustomHelpCommand(commands.HelpCommand, commands.Cog):
@@ -60,10 +63,25 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
             interaction: The interaction that triggered this command.
             command: Optional command name to get help for.
         """
-        bot = interaction.client
-        ctx = await commands.Context.from_interaction(interaction)
-        ctx.bot = bot
-        await ctx.invoke(bot.get_command("help"), command=command)
+        # Defer immediately to prevent timeout
+        await interaction.response.defer(ephemeral=False)
+        
+        try:
+            bot = interaction.client
+            ctx = await commands.Context.from_interaction(interaction)
+            ctx.bot = bot
+            
+            # Log that we're invoking the help command
+            logger.info(f"Invoking help command for user {interaction.user.id} with command: {command}")
+            
+            await ctx.invoke(bot.get_command("help"), command=command)
+        except Exception as e:
+            logger.error(f"Error in help slash command: {e}", exc_info=True)
+            # Try to inform the user of the error
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
 
     async def send_bot_help(
         self, mapping: Mapping[commands.Cog | None, list[commands.Command]]
