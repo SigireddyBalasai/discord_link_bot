@@ -29,6 +29,18 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
             }
         )
 
+    async def prepare_help_command(
+        self, ctx: commands.Context, command: str | None = None
+    ) -> None:
+        """Prepare the help command.
+        
+        Args:
+            ctx: The command context.
+            command: The command argument.
+        """
+        self.context = ctx
+        await super().prepare_help_command(ctx, command)
+
     def _add_to_bot(self, bot: commands.Bot) -> None:
         """Add the help command to the bot and register the slash command.
         
