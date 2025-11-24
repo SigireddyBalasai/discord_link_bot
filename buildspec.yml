@@ -22,7 +22,8 @@ phases:
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo "ImageTag=$IMAGE_TAG"
       # Capture git version for baking into Docker image
-      - GIT_COMMIT=$(git rev-parse --short HEAD)
+      # CodePipeline doesn't provide .git directory, so use CODEBUILD_RESOLVED_SOURCE_VERSION
+      - GIT_COMMIT=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
       - echo "v0.1.0 ($GIT_COMMIT)" > VERSION
       - echo "Build version:" $(cat VERSION)
       - echo "(skipping local test image to reduce pulls against Docker Hub)"
