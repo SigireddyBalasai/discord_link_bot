@@ -5,12 +5,16 @@ Provides a clean, embed-based help interface for both prefix and slash commands.
 """
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 from collections.abc import Mapping
 
 
-class CustomHelpCommand(commands.HelpCommand):
-    """Custom help command with embed-based display."""
+class CustomHelpCommand(commands.HelpCommand, commands.Cog):
+    """Custom help command with embed-based display.
+    
+    Inherits from both HelpCommand and Cog to support both prefix and slash commands.
+    """
 
     def __init__(self) -> None:
         """Initialize the custom help command."""
@@ -20,6 +24,43 @@ class CustomHelpCommand(commands.HelpCommand):
                 "aliases": ["h"],
             }
         )
+
+    def _add_to_bot(self, bot: commands.Bot) -> None:
+        """Add the help command to the bot and register the slash command.
+        
+        Args:
+            bot: The bot instance to add the command to.
+        """
+        super()._add_to_bot(bot)
+        self.bot = bot
+        bot.tree.add_command(self._app_command_callback)
+
+    def _remove_from_bot(self, bot: commands.Bot) -> None:
+        """Remove the help command from the bot and unregister the slash command.
+        
+        Args:
+            bot: The bot instance to remove the command from.
+        """
+        super()._remove_from_bot(bot)
+        bot.tree.remove_command(self._app_command_callback.name)
+
+    @app_commands.command(name="help", description="Shows help information for commands")
+    @app_commands.describe(command="The command to get help for")
+    async def _app_command_callback(
+        self, interaction: discord.Interaction, command: str | None = None
+    ) -> None:
+        """Application command callback for /help.
+        
+        This bridges the slash command to the prefix help command.
+        
+        Args:
+            interaction: The interaction that triggered this command.
+            command: Optional command name to get help for.
+        """
+        bot = interaction.client
+        ctx = await commands.Context.from_interaction(interaction)
+        ctx.bot = bot
+        await ctx.invoke(bot.get_command("help"), command=command)
 
     async def send_bot_help(
         self, mapping: Mapping[commands.Cog | None, list[commands.Command]]
