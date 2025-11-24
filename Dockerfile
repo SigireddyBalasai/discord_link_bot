@@ -24,6 +24,13 @@ COPY --from=builder /app/.venv /app/.venv
 
 COPY . /app
 
+# Copy VERSION file if it exists (from build), otherwise create a dev version
+RUN if [ -f /app/VERSION ]; then \
+        echo "Using VERSION file from build"; \
+    else \
+        echo "v0.1.0 (dev)" > /app/VERSION; \
+    fi
+
 RUN ls -la /app
 
 WORKDIR /app

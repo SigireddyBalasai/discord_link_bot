@@ -20,6 +20,9 @@ bot_data.db
 .env.local
 infra/terraform.tfvars
 
+# Build artifacts
+VERSION
+
 # Terraform local state and provider details — do not commit
 infra/terraform.tfstate
 infra/terraform.tfstate.backup

@@ -21,6 +21,10 @@ phases:
       - echo Prebuilding
       - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
       - echo "ImageTag=$IMAGE_TAG"
+      # Capture git version for baking into Docker image
+      - GIT_COMMIT=$(git rev-parse --short HEAD)
+      - echo "v0.1.0 ($GIT_COMMIT)" > VERSION
+      - echo "Build version:" $(cat VERSION)
       - echo "(skipping local test image to reduce pulls against Docker Hub)"
       - echo "Using base images directly from GHCR and Docker Hub (do not mirror to ECR in this step)"
       - echo "Installing static analysis tools for Terraform and IaC"
