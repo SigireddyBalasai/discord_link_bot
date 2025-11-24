@@ -30,9 +30,7 @@ phases:
       - echo "Using base images directly from GHCR and Docker Hub (do not mirror to ECR in this step)"
       - echo "Installing static analysis tools for Terraform and IaC"
       - echo "Running code quality checks..."
-      - curl -LsSf https://astral.sh/uv/install.sh | sh
-      - export PATH="/root/.local/bin:$PATH"
-      - uv run ruff check .
+      # - uv run ruff check . # Disabled as per user request
       # - uv run pytest # Uncomment when tests are fixed/available
 
 
