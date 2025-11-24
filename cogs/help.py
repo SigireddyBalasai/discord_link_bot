@@ -74,7 +74,7 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
             # Log that we're invoking the help command
             logger.info(f"Invoking help command for user {interaction.user.id} with command: {command}")
             
-            await ctx.invoke(bot.get_command("help"), command=command)
+            await self.command_callback(ctx, command=command)
         except Exception as e:
             logger.error(f"Error in help slash command: {e}", exc_info=True)
             # Try to inform the user of the error
