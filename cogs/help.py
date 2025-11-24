@@ -53,12 +53,13 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
         """Application command callback for /help.
         
         This bridges the slash command to the prefix help command.
+        The Context created from the interaction will automatically handle
+        responding to the interaction when messages are sent.
         
         Args:
             interaction: The interaction that triggered this command.
             command: Optional command name to get help for.
         """
-        await interaction.response.defer(ephemeral=False)
         bot = interaction.client
         ctx = await commands.Context.from_interaction(interaction)
         ctx.bot = bot
