@@ -14,6 +14,7 @@ from link_utils.url_tools import extract_urls
 from core.db.models import OutputChannel
 from core.db.db_manager import Database
 from core.bot_setup import DiscordBot
+from core.channel_utils import get_or_create_webhook
 
 logger: logging.Logger = logging.getLogger(name=__name__)
 
@@ -121,46 +122,7 @@ class LinkMonitor(commands.Cog):
             except discord.HTTPException as e:
                 logger.error("Error deleting message: %s", e)
 
-    async def _get_or_create_webhook(
-        self, channel: discord.TextChannel
-    ) -> discord.Webhook | None:
-        """Get or create a webhook for the specified channel.
 
-        Searches for existing bot-owned webhooks before creating a new one.
-
-        Args:
-            channel: The text channel to get or create a webhook for.
-
-        Returns:
-            A Discord webhook instance or None if creation/fetching fails.
-        """
-        try:
-            webhooks = await channel.webhooks()
-            bot_user = channel.guild.me
-            for webhook in webhooks:
-                if webhook.user and bot_user and webhook.user.id == bot_user.id:
-                    await self.db.output_channels.set_webhook_url(
-                        channel.guild.id, channel.id, webhook.url
-                    )
-                    logger.debug("Found existing webhook for #%s", channel.name)
-                    return webhook
-        except discord.Forbidden:
-            logger.error("Missing permissions to manage webhooks in #%s", channel.name)
-            return None
-
-        try:
-            webhook = await channel.create_webhook(name="Link Monitor")
-            await self.db.output_channels.set_webhook_url(
-                channel.guild.id, channel.id, webhook.url
-            )
-            logger.info("Created new webhook for #%s", channel.name)
-            return webhook
-        except discord.Forbidden:
-            logger.error("Missing permissions to create webhook in #%s", channel.name)
-            return None
-        except discord.HTTPException as e:
-            logger.error("Error creating webhook: %s", e)
-            return None
 
     async def _forward_links_to_channel(
         self,
@@ -184,7 +146,7 @@ class LinkMonitor(commands.Cog):
         sent = False
         for category, category_urls in links_by_category.items():
             if getattr(output_channel_config, category, False):
-                webhook = await self._get_or_create_webhook(output_channel)
+                webhook = await get_or_create_webhook(output_channel, self.db)
                 if webhook is None:
                     logger.error(
                         "Could not create webhook for #%s", output_channel.name

@@ -113,3 +113,49 @@ def create_acls(
         Dictionary of ACL settings.
     """
     return {PARAM_TO_KEY[param]: locals()[param] for param in PARAM_TO_KEY}
+
+
+async def get_or_create_webhook(
+    channel: discord.TextChannel, db: "Database"
+) -> discord.Webhook | None:
+    """Get or create a webhook for the specified channel.
+
+    Searches for existing bot-owned webhooks before creating a new one.
+    Updates the database with the webhook URL.
+
+    Args:
+        channel: The text channel to get or create a webhook for.
+        db: The database instance for updating configuration.
+
+    Returns:
+        A Discord webhook instance or None if creation/fetching fails.
+    """
+    from core.db.db_manager import Database  # Avoid circular import
+
+    try:
+        webhooks = await channel.webhooks()
+        bot_user = channel.guild.me
+        for webhook in webhooks:
+            if webhook.user and bot_user and webhook.user.id == bot_user.id:
+                await db.output_channels.set_webhook_url(
+                    channel.guild.id, channel.id, webhook.url
+                )
+                logger.debug("Found existing webhook for #%s", channel.name)
+                return webhook
+    except discord.Forbidden:
+        logger.error("Missing permissions to manage webhooks in #%s", channel.name)
+        return None
+
+    try:
+        webhook = await channel.create_webhook(name="Link Monitor")
+        await db.output_channels.set_webhook_url(
+            channel.guild.id, channel.id, webhook.url
+        )
+        logger.info("Created new webhook for #%s", channel.name)
+        return webhook
+    except discord.Forbidden:
+        logger.error("Missing permissions to create webhook in #%s", channel.name)
+        return None
+    except discord.HTTPException as e:
+        logger.error("Error creating webhook: %s", e)
+        return None

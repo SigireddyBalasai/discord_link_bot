@@ -41,6 +41,11 @@ variable "allowed_ssh_cidr" {
   description = "CIDR allowed to SSH into the EC2 instance (default 0.0.0.0/0). WARNING: Set a narrower CIDR for production to improve security."
   type        = string
   default     = "0.0.0.0/0"
+
+  validation {
+    condition     = can(cidrhost(var.allowed_ssh_cidr, 0))
+    error_message = "The allowed_ssh_cidr value must be a valid CIDR block."
+  }
 }
 
 /* SSH access is always enabled; use `allowed_ssh_cidr` to restrict where SSH is accepted. */
