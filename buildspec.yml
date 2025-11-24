@@ -32,13 +32,15 @@ phases:
       - echo "Running code quality checks..."
       # - uv run ruff check . # Disabled as per user request
       # - uv run pytest # Uncomment when tests are fixed/available
+      - echo "Pulling latest image for layer caching..."
+      - docker pull $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest || true
 
 
   build:
     commands:
       - echo Building the Docker image...
-      # ARM64 build without cache - updated
-      - DOCKER_BUILDKIT=1 docker build -t $ECR_REPO:$IMAGE_TAG .
+      # ARM64 build with cache
+      - DOCKER_BUILDKIT=1 docker build --cache-from $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t $ECR_REPO:$IMAGE_TAG .
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker push $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:$IMAGE_TAG
       - docker tag $ECR_REPO:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO:latest

@@ -29,6 +29,27 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
             }
         )
 
+    async def _send_embed(self, embed: discord.Embed) -> None:
+        """Send an embed, handling deferred interactions correctly.
+        
+        Args:
+            embed: The embed to send.
+        """
+        if (
+            self.context 
+            and self.context.interaction 
+            and not self.context.interaction.response.is_done()
+        ):
+            await self.context.interaction.edit_original_response(embed=embed)
+        elif (
+             self.context 
+             and self.context.interaction 
+             and self.context.interaction.response.is_done()
+        ):
+             await self.context.interaction.edit_original_response(embed=embed)
+        else:
+            await self.get_destination().send(embed=embed)
+
     async def prepare_help_command(
         self, ctx: commands.Context, command: str | None = None
     ) -> None:
@@ -83,13 +104,11 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
             ctx = await commands.Context.from_interaction(interaction)
             ctx.bot = bot
             
-            # Log that we're invoking the help command
             logger.info(f"Invoking help command for user {interaction.user.id} with command: {command}")
             
             await self.command_callback(ctx, command=command)
         except Exception as e:
             logger.error(f"Error in help slash command: {e}", exc_info=True)
-            # Try to inform the user of the error
             if not interaction.response.is_done():
                 await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
             else:
@@ -135,7 +154,7 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
 
         embed.set_footer(text=f"Use !help <command> for detailed information | {get_version_string()}")
 
-        await self.get_destination().send(embed=embed)
+        await self._send_embed(embed)
 
     async def send_command_help(self, command: commands.Command) -> None:
         """Send help for a specific command.
@@ -171,7 +190,7 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
                 inline=False,
             )
 
-        await self.get_destination().send(embed=embed)
+        await self._send_embed(embed)
 
     async def send_group_help(self, group: commands.Group) -> None:
         """Send help for a command group.
@@ -199,7 +218,7 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
                     inline=False,
                 )
 
-        await self.get_destination().send(embed=embed)
+        await self._send_embed(embed)
 
     async def send_cog_help(self, cog: commands.Cog) -> None:
         """Send help for a cog.
@@ -225,4 +244,4 @@ class CustomHelpCommand(commands.HelpCommand, commands.Cog):
                 inline=False,
             )
 
-        await self.get_destination().send(embed=embed)
+        await self._send_embed(embed)
