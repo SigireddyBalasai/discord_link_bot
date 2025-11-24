@@ -24,3 +24,11 @@ coverage.xml
 .elasticbeanstalk
 logs
 .env
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+*.egg-info/
+*.dist-info/
+*.sqlite3
+*.db
