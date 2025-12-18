@@ -39,7 +39,7 @@ async def main() -> None:
     if token is None:
         logger.error("DISCORD_TOKEN environment variable not found")
         return
-    logger.info("Discord token found, starting bot...")
+    logger.info(f"Discord token found (length: {len(token)}), starting bot...")
 
     try:
         async with bot:
