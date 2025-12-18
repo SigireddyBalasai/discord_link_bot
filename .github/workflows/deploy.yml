@@ -49,6 +49,16 @@ jobs:
         zip -r ../deployment.zip .
         aws s3 cp ../deployment.zip s3://discord-bots-shared-codedeploy-bundles-us-east-1/discord-link-bot-pipeline/
 
+    - name: Stop previous deployments
+      run: |
+        DEPLOYMENTS=$(aws deploy list-deployments --application-name discord-link-bot-app --deployment-group-name discord-link-bot-deployment-group --query 'deployments' --output text)
+        for DEPLOYMENT_ID in $DEPLOYMENTS; do
+          STATUS=$(aws deploy get-deployment --deployment-id $DEPLOYMENT_ID --query 'deploymentInfo.status' --output text)
+          if [ "$STATUS" = "InProgress" ] || [ "$STATUS" = "Created" ] || [ "$STATUS" = "Queued" ]; then
+            aws deploy stop-deployment --deployment-id $DEPLOYMENT_ID
+          fi
+        done
+
     - name: Create CodeDeploy deployment
       run: |
         DEPLOYMENT_ID=$(aws deploy create-deployment \
