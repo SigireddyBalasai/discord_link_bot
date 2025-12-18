@@ -13,6 +13,7 @@ echo "Pulling image: $IMAGE_URI"
 docker pull $IMAGE_URI
 
 echo "Starting container..."
-docker run -d --name discord-bot --restart unless-stopped -p 80:80 $IMAGE_URI
+DISCORD_TOKEN=$(aws ssm get-parameter --name /discord-bot/discord-link-bot/discord_token --with-decryption --query Parameter.Value --output text)
+docker run -d --name discord-bot --restart unless-stopped -p 80:80 -e DISCORD_TOKEN="$DISCORD_TOKEN" $IMAGE_URI
 
 echo "Container started."
