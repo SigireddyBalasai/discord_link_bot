@@ -26,6 +26,10 @@ VERSION
 # Terraform local state and provider details — do not commit
 infra/terraform.tfstate
 infra/terraform.tfstate.backup
+infra/terraform.tfstate.*
+infra/*.tfstate
+infra/*.tfstate.*
+infra/tfplan*
 infra/.terraform/
 infra/*.tfplan
 infra/.ssh/

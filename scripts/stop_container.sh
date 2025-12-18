@@ -1,24 +1,8 @@
 #!/bin/bash
 set -e
 
-# Read ECR_REPO from file to derive container name
-if [ -f ECR_REPO ]; then
-  ECR_REPO=$(cat ECR_REPO)
-  BOT_NAME=$(echo $ECR_REPO | sed 's/-ecr_repository$//')
-else
-  BOT_NAME="discord-bot"
-fi
+echo "Stopping Discord bot container..."
+docker stop discord-bot || true
+docker rm discord-bot || true
 
-CONTAINER_NAME=${CONTAINER_NAME:-$BOT_NAME}
-
-# Stop and remove the running container if exists
-if docker ps -q --filter "name=${CONTAINER_NAME}" | grep -q .; then
-  docker stop ${CONTAINER_NAME} || true
-fi
-
-# Remove the container if it exists (running or stopped)
-if docker ps -a -q --filter "name=${CONTAINER_NAME}" | grep -q .; then
-  docker rm ${CONTAINER_NAME} || true
-fi
-
-exit 0
+echo "Container stopped."
