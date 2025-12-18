@@ -54,8 +54,8 @@ jobs:
         DEPLOYMENTS=$(aws deploy list-deployments --application-name discord-link-bot-app --deployment-group-name discord-link-bot-deployment-group --query 'deployments' --output text)
         for DEPLOYMENT_ID in $DEPLOYMENTS; do
           STATUS=$(aws deploy get-deployment --deployment-id $DEPLOYMENT_ID --query 'deploymentInfo.status' --output text)
-          if [ "$STATUS" = "InProgress" ] || [ "$STATUS" = "Created" ] || [ "$STATUS" = "Queued" ]; then
-            aws deploy stop-deployment --deployment-id $DEPLOYMENT_ID
+          if [ "$STATUS" != "Succeeded" ]; then
+            aws deploy stop-deployment --deployment-id $DEPLOYMENT_ID 2>/dev/null || true
           fi
         done
 
