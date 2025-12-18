@@ -6,21 +6,18 @@ files:
 
 hooks:
   BeforeInstall:
-    - location: stop_container.sh
+    - location: scripts/stop_container.sh
       timeout: 180
 
   AfterInstall:
-    - location: ecr_login.sh
+    - location: scripts/ecr_login.sh
       timeout: 180
 
   ApplicationStart:
-    - location: start_container.sh
+    - location: scripts/start_container.sh
       timeout: 180
 
   ApplicationStop:
-    - location: stop_container.sh
+    - location: scripts/stop_container.sh
       timeout: 120
 
-  ApplicationCleanup:
-    - location: cleanup.sh
-      timeout: 60
