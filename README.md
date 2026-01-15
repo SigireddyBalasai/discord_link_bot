@@ -1,13 +1,13 @@
 # Discord Link Bot
 
-A Discord bot that monitors and forwards links from configured channels, with automated AWS infrastructure deployment using Terraform and CI/CD via CodePipeline.
+A Discord bot that monitors and forwards links from configured channels, with automated AWS infrastructure deployment using Terraform and CI/CD via GitHub Actions.
 
 ## Features
 
 - 🔗 **Link Monitoring**: Automatically detects and categorizes links (YouTube, Twitter, Twitch, GitHub, etc.)
 - 📤 **Smart Forwarding**: Routes links to appropriate channels based on configurable ACLs
 - ⚙️ **Slash Commands**: Full Discord slash command support for easy configuration
-- 🚀 **Automated Deployment**: Push-to-deploy with CodeCommit → CodeBuild → CodeDeploy
+- 🚀 **Automated Deployment**: Push-to-deploy with GitHub Actions → CodeDeploy
 - 📊 **Real-time Monitoring**: Watch your deployment progress right in your terminal
 - 🏗️ **Infrastructure as Code**: Complete AWS infrastructure managed with Terraform
 
@@ -62,25 +62,19 @@ A Discord bot that monitors and forwards links from configured channels, with au
    terraform apply
    ```
 
-3. **Set up CodeCommit remote:**
+4. **Deploy:**
    ```bash
-   # Get the CodeCommit URL
-   CODECOMMIT_URL=$(terraform output -raw codecommit_clone_url_http)
-   
-   # Add remote
-   git remote add codecommit $CODECOMMIT_URL
+   # Push to GitHub main branch to trigger automated deployment
+   git add .
+   git commit -m "Deploy Discord bot"
+   git push origin main
    ```
 
-4. **Deploy and watch:**
-   ```bash
-   ./scripts/deploy-and-watch.sh "Initial deployment"
-   ```
-
-   This will:
-   - Commit your changes
-   - Push to CodeCommit
-   - Monitor the pipeline execution in real-time
-   - Show you when deployment completes
+   The GitHub Actions workflow will automatically:
+   - Build the Docker image
+   - Push to ECR
+   - Create deployment bundle
+   - Deploy to EC2 via CodeDeploy
 
 ## Commands
 
@@ -101,10 +95,10 @@ A Discord bot that monitors and forwards links from configured channels, with au
 ### AWS Infrastructure
 
 ```
-┌─────────────┐      ┌──────────────┐      ┌─────────────┐
-│ CodeCommit  │─────▶│  CodeBuild   │─────▶│ CodeDeploy  │
-│  (Source)   │      │   (Build)    │      │   (Deploy)  │
-└─────────────┘      └──────────────┘      └─────────────┘
+┌─────────────┐      ┌────────────────┐      ┌─────────────┐
+│   GitHub    │─────▶│ GitHub Actions │─────▶│ CodeDeploy  │
+│  (Source)   │      │    (Build)     │      │   (Deploy)  │
+└─────────────┘      └────────────────┘      └─────────────┘
                             │                      │
                             ▼                      ▼
                      ┌──────────┐           ┌──────────┐
@@ -124,9 +118,6 @@ A Discord bot that monitors and forwards links from configured channels, with au
 - EC2 instance (t4g.nano) running Docker
 - DynamoDB table for bot data
 - ECR repository for Docker images
-- CodeCommit repository for source code
-- CodePipeline for automated CI/CD
-- CodeBuild for building Docker images
 - CodeDeploy for deploying to EC2
 - S3 bucket for deployment artifacts
 - CloudWatch log groups
@@ -134,8 +125,8 @@ A Discord bot that monitors and forwards links from configured channels, with au
 
 ### Deployment Flow
 
-1. **Push to CodeCommit** → EventBridge triggers pipeline
-2. **CodeBuild** → Builds Docker image, pushes to ECR, creates deployment bundle
+1. **Push to GitHub main branch** → GitHub Actions workflow triggers
+2. **GitHub Actions** → Builds Docker image, pushes to ECR, creates deployment bundle
 3. **CodeDeploy** → Pulls image from ECR, deploys to EC2
 4. **EC2** → Runs bot container with CloudWatch logging
 
@@ -159,9 +150,9 @@ discord_link_bot/
 │   ├── variables.tf
 │   └── *.tf               # Other Terraform files
 ├── scripts/                # Helper scripts
-│   └── deploy-and-watch.sh # Deploy and monitor script
+│   ├── start_container.sh  # Container startup script
+│   └── stop_container.sh   # Container stop script
 ├── Dockerfile              # Multi-stage Docker build
-├── buildspec.yml           # CodeBuild configuration
 ├── appspec.yml             # CodeDeploy configuration
 └── pyproject.toml          # Python dependencies (uv)
 ```
@@ -210,23 +201,24 @@ This project uses Git hooks to automate the entire deployment workflow. Just use
 
 **Simple deployment:**
 ```bash
-git push codecommit main
+git push origin main
 ```
 
-That's it! The Git hooks automatically:
-1. ✅ Validate your code (pre-push hook)
-2. 🚀 Push to CodeCommit
-3. 📊 Monitor pipeline execution (post-push hook)
-4. ✅ Notify you when deployment completes
+That's it! GitHub Actions automatically:
+1. ✅ Build Docker image
+2. 🚀 Push to ECR
+3. 📦 Create deployment bundle
+4. 🚀 Deploy via CodeDeploy
+5. ✅ Notify you when deployment completes
 
 **What happens automatically:**
 
-**Pre-Push Validation:**
-- Checks Python syntax
-- Validates Terraform configuration
-- Scans for secrets in code
-- Validates Docker build
-- Blocks push if any check fails
+**GitHub Actions Workflow:**
+- Builds and pushes Docker image to ECR
+- Creates CodeDeploy deployment bundle
+- Uploads bundle to S3
+- Triggers CodeDeploy deployment
+- Monitors deployment status
 
 **Post-Push Monitoring:**
 - Waits for pipeline to start
@@ -242,33 +234,34 @@ vim main.py
 # Commit
 git commit -m "feat: add new command"
 
-# Deploy (hooks handle everything)
-git push codecommit main
+# Deploy (GitHub Actions handles everything)
+git push origin main
 ```
 
 **Output:**
 ```
-🔍 Pre-Push Validation
-✓ Python syntax valid
-✓ No secrets detected
-✓ All pre-push checks passed!
+🔍 GitHub Actions Workflow Started
+✓ Code checkout successful
+✓ AWS credentials configured
+✓ ECR login successful
+✓ Docker build started...
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 CodePipeline Status
+🚀 CodeDeploy Status
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Pipeline: discord-bot-pipeline
-Execution: abc123-def456
+Application: discord-link-bot-app
+Deployment: abc123-def456
 
-  ✓ Source: Succeeded
-  ⏳ Build: InProgress
-  ○ Deploy: Pending
+  ✓ Build: Succeeded
+  ⏳ Deploy: InProgress
+  ○ Validation: Pending
 ```
 
 ### Skip Validation (Not Recommended)
 
 If you need to bypass pre-push validation:
 ```bash
-git push --no-verify codecommit main
+git push --no-verify origin main
 ```
 
 ### Git Hooks Features
@@ -277,23 +270,26 @@ The project includes 6 powerful Git hooks:
 
 1. **pre-commit** - Formats, lints, and validates code before commit
 2. **pre-push** - Validates code before push
-3. **post-push** - Monitors pipeline execution
-4. **post-commit** - Shows commit info and push reminders
-5. **prepare-commit-msg** - Adds commit templates
-6. **post-checkout** - Detects dependency changes
-
-See `.git/hooks/README.md` for detailed documentation.
+3. **post-commit** - Shows commit info and push reminders
+4. **prepare-commit-msg** - Adds commit templates
+5. **post-checkout** - Detects dependency changes
 
 ### Monitoring Deployments
 
-**View pipeline status:**
+**View GitHub Actions workflow:**
+- Go to your GitHub repository
+- Click on "Actions" tab
+- Select the latest workflow run
+- Monitor build and deployment progress
+
+**View CodeDeploy status:**
 ```bash
-aws codepipeline get-pipeline-state --name $(terraform -chdir=infra output -raw codepipeline_name)
+aws deploy get-deployment --deployment-id <deployment-id>
 ```
 
-**View build logs:**
+**View application logs:**
 ```bash
-aws logs tail /aws/codebuild/$(terraform -chdir=infra output -raw codebuild_project) --follow
+aws logs tail /aws/lambda/discord-link-bot-logs --follow
 ```
 
 **View bot logs:**
@@ -473,20 +469,6 @@ sudo tail -f /var/log/aws/codedeploy-agent/codedeploy-agent.log
 ```bash
 aws dynamodb describe-table \
   --table-name $(terraform -chdir=infra output -raw dynamodb_table_name)
-```
-
-### Missing Dependencies
-
-**Install jq (required for deploy-and-watch script):**
-```bash
-# Ubuntu/Debian
-sudo apt install jq
-
-# macOS
-brew install jq
-
-# Amazon Linux
-sudo yum install jq
 ```
 
 ## Multi-Bot Support

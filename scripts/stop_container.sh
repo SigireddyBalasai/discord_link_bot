@@ -1,8 +1,10 @@
 #!/bin/bash
 set -e
 
+BOT_NAME=${BOT_NAME:-discord-link-bot}
+
 echo "Stopping Discord bot container..."
-docker stop discord-bot || true
-docker rm discord-bot || true
+docker stop "$BOT_NAME" || true
+docker rm "$BOT_NAME" || true
 
 echo "Container stopped."
