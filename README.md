@@ -1,5 +1,7 @@
 # Discord Link Bot
 
+[![Profile](https://img.shields.io/badge/Profile-SigireddyBalasai-blue?logo=github)](https://github.com/SigireddyBalasai/badge-readme)
+
 A Discord bot that monitors and forwards links from configured channels, with automated AWS infrastructure deployment using Terraform and CI/CD via GitHub Actions.
 
 ## Features
